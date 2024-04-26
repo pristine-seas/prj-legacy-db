@@ -1,0 +1,221 @@
+---
+title: "Submersible"
+number-sections: false
+date: today
+format: 
+  html:
+    self-contained: true
+    code-fold: true
+    toc: true
+    toc-location: right
+---
+
+```{r, message = F, warning = F, fig.width = 10, fig.height = 10, echo = F}
+options(scipen = 999)
+
+library(paletteer)
+library(sf)
+library(bigrquery)
+library(gt)
+library(tidyverse)
+
+knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-legacy-db")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), project = "pristine-seas")
+```
+
+# Osa
+
+```{r osa_wrangle, eval = TRUE, include = T}
+osa_dives <- readxl::read_excel(file.path(prj_path, "data/raw/submersible/OSA_sub.xlsx")) |> 
+  janitor::clean_names() |> 
+  rename(deepsee_dive_id = inmersion, 
+         date = fecha,
+         location = sitio,
+         surface_start_lat = latitud,
+         surface_start_lon = longitud,
+         max_depth_m = profundidad_m)
+
+osa_dives <- osa_dives |> 
+  arrange(deepsee_dive_id) |> 
+  mutate(method = "Submersible dive",
+         deepsee_dive_id = as.integer(deepsee_dive_id),
+         ps_expedition_id = "CRI_2019",
+         ps_site_id = paste(ps_expedition_id, 
+                            "sub", 
+                            formatC(row_number(),flag = 0, digits = 1), 
+                            sep = "_")) |> 
+  select(ps_expedition_id, method, ps_site_id, location , date, everything())
+
+osa_dives <- osa_dives |> 
+  mutate_at(vars(contains(c("lat", "lon"))), 
+            ~ str_remove_all(.x, "N|W") %>% 
+              str_squish() %>% 
+              str_replace_all(pattern = "°|’|'", replacement =  " ") ) |> 
+  mutate_at(vars(contains(c("lat", "lon"))), 
+            ~ measurements::conv_unit(.x, 
+                                      from = 'deg_dec_min', to = 'dec_deg') %>% 
+              as.numeric() %>% 
+              round(5)) |> 
+  mutate(across(c(ends_with("lon")),
+                ~ -1*.)) |> 
+  select(ps_expedition_id, method, ps_site_id, location , date, surface_start_lat, surface_start_lon, max_depth_m, everything())
+```
+
+```{r osa_map, eval = TRUE, include = T}
+tmp <- osa_dives |> 
+  filter(!is.na(surface_start_lon)) |> 
+  st_as_sf(coords = c("surface_start_lon", "surface_start_lat"), crs = 4326) |> 
+  distinct(ps_expedition_id, ps_site_id, location, max_depth_m, geometry) 
+
+mapview::mapview(tmp,
+                 zcol = c(max_depth_m = "max_depth_m"), 
+                 legend = TRUE,
+                 map.types = c("Esri.WorldImagery"),
+                 layer.name = "Deployment depth (m)",
+                 popup = leafpop::popupTable(tmp,
+                                      zcol = c(
+                                               "ps_expedition_id",
+                                               "ps_site_id",
+                                               "location",
+                                               "max_depth_m")))
+```
+
+# Malpelo
+
+```{r malp_wrangle, eval = TRUE, include = T}
+malp_dives <- readxl::read_excel(file.path(prj_path, "data/raw/submersible/MalPelo DeepSee dives' data.xlsx"),
+                                 sheet = "meta") |> 
+  janitor::clean_names() |>
+  rename(deepsee_dive_id = dive_number, 
+         max_depth_m = max_depth_meters,
+         gps_surface_start = gps_start,
+         gps_surface_end = gps_end)
+
+malp_dives <- malp_dives |> 
+  arrange(trips_dive) |> 
+  mutate(method = "Submersible dive",
+         location = "Malpelo",
+         deepsee_dive_id = as.integer(deepsee_dive_id),
+         ps_expedition_id = "COL_2018",
+         ps_site_id = paste(ps_expedition_id, 
+                            "sub", 
+                            formatC(row_number(), flag = 0, digits = 1), 
+                            sep = "_")) |> 
+  select(-trips_dive) |> 
+  mutate_at(vars(gps_surface_start, gps_surface_end), 
+            ~str_replace(.x, "N", "N;")) |> 
+  separate(gps_surface_start, into = c("surface_start_lat", "surface_start_lon"), sep = ";") %>% 
+  separate(gps_surface_end, into = c("surface_end_lat", "surface_end_lon"), sep = ";") %>% 
+  mutate_at(vars(contains(c("lat", "lon"))), 
+            ~ str_remove_all(.x, "N|W") %>% 
+              str_squish() %>% 
+              str_replace_all(pattern = "\\'", replacement =  " ") ) |> 
+  mutate_at(vars(contains(c("lat", "lon"))), 
+            ~ measurements::conv_unit(.x, 
+                                      from = 'deg_dec_min', to = 'dec_deg') %>% 
+              as.numeric() %>% 
+              round(5)) |> 
+  mutate(across(c(ends_with("lon")),
+                ~ -1*.)) |>  
+  select(ps_expedition_id, method, ps_site_id, location, date, surface_start_lon, surface_start_lat, surface_end_lon, surface_end_lat, max_depth_m, deepsee_dive_id)
+```
+
+```{r malp_map, eval = TRUE, include = T}
+tmp <- malp_dives |> 
+  filter(!is.na(surface_start_lon)) |> 
+  st_as_sf(coords = c("surface_start_lon", "surface_start_lat"), crs = 4326) |> 
+  distinct(ps_expedition_id, ps_site_id, location, max_depth_m, geometry) 
+
+mapview::mapview(tmp,
+                 zcol = c(max_depth_m = "max_depth_m"), 
+                 legend = TRUE,
+                 map.types = c("Esri.WorldImagery"),
+                 layer.name = "Deployment depth (m)",
+                 popup = leafpop::popupTable(tmp,
+                                      zcol = c(
+                                               "ps_expedition_id",
+                                               "ps_site_id",
+                                               "location",
+                                               "max_depth_m")))
+```
+
+# Clipperton
+
+```{r}
+clip_dives <- readxl::read_excel(file.path(prj_path, "data/raw/submersible/sub_log_clipperton.xlsx"), 
+                                 range = "A1:V17") |> 
+  janitor::clean_names() |>
+  rename(dive_start_time = time,
+         deepsee_dive_id = dive_number, 
+         max_depth_m = depth_bottom_depth,
+         bottom_time = duration_dive,
+         surface_start_lon = start_long,
+         surface_start_lat = start_lat,
+         surface_end_lon = stop_long,
+         surface_end_lat = stop_lat,
+         observer_1 = pax_1,
+         observer_2 = pax_2)
+
+clip_dives <- clip_dives |> 
+  mutate(method = "Submersible dive",
+         deepsee_dive_id = as.integer(deepsee_dive_id),
+         ps_expedition_id = "FRA_2016",
+         ps_site_id = paste(ps_expedition_id, 
+                            "sub", 
+                            formatC(row_number(), flag = 0, digits = 1), 
+                            sep = "_"),
+         bottom_time = hms::hms(lubridate::hm(bottom_time)),
+         dive_start_time = as_datetime(hm(dive_start_time))) |> 
+  select(ps_expedition_id, method, ps_site_id, location, date, dive_start_time, bottom_time, surface_start_lon,
+         surface_start_lat, surface_end_lon, surface_end_lat, max_depth_m, deepsee_dive_id, pilot, observer_1,observer_2)
+
+clip_dives
+
+date(clip_dives$dive_start_time) <- clip_dives$date
+```
+
+```{r malp_map, eval = TRUE, include = T}
+tmp <- clip_dives |> 
+  filter(!is.na(surface_start_lon)) |> 
+  st_as_sf(coords = c("surface_start_lon", "surface_start_lat"), crs = 4326) |> 
+  distinct(ps_expedition_id, ps_site_id, location, max_depth_m, geometry) 
+
+mapview::mapview(tmp,
+                 zcol = c(max_depth_m = "max_depth_m"), 
+                 legend = TRUE,
+                 map.types = c("Esri.WorldImagery"),
+                 layer.name = "Deployment depth (m)",
+                 popup = leafpop::popupTable(tmp,
+                                      zcol = c("ps_expedition_id",
+                                               "ps_site_id",
+                                               "location",
+                                               "max_depth_m")))
+```
+
+```{r}
+legacy_dives <- bind_rows(clip_dives, osa_dives, malp_dives)
+```
+
+```{r}
+all_dives <- tbl(bq_connection, "pristine-seas.submersible.deepsee_dives") |> 
+  filter(!is.na(ps_site_id)) |> 
+  collect()
+
+all_dives <- all_dives |> 
+  bind_rows(legacy_dives) |> 
+  arrange(date) 
+
+bigrquery::bq_table_upload("pristine-seas.submersible.deepsee_dives", 
+                           values = all_dives, fields = all_dives, write_disposition = 'WRITE_APPEND')
+```
+
+
