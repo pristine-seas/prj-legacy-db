@@ -1,0 +1,489 @@
+---
+title: "Fish survey data processing"
+date: today
+format: 
+  html:
+    theme: minty
+    self-contained: true
+    code-fold: true
+    toc: true 
+    toc-depth: 4
+    toc-location: right
+---
+
+```{r setup, message = F, warning = F, fig.width = 10, fig.height = 10, echo = F}
+options(scipen = 999)
+
+library(PristineSeasR)
+library(paletteer)
+library(sf)
+library(bigrquery)
+library(gt)
+library(tidyverse)
+library(pointblank)
+
+knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
+
+set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-legacy-db")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+project_id <- "pristine-seas"
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), 
+                                project = project_id)
+```
+
+This document outlines how we process fish survey data from our expeditions and upload it to the `fish_surveys` dataset in the Pristine Seas database. 
+
+This dataset consists of three main tables: `stations`, `observations`, and `taxa_lookup` which capture detailed and clean information about fish surveys conducted during Pristine Seas expeditions, including data about survey sites, observed fish species, and taxonomic information.
+
+In addition, three summary tables, `summary_by_station_and_taxa`, `summary_by_station`, and `summary_by_taxa` aggregate and summarize the data for further analysis and visualization. This script will create and upload those five tables to the BigQuery `fish_surveys` dataset.
+
+In this example, we will process the fish survey data from the 2009, 2017, 2021, and 2023 expeditions to the Southern Line Islands 
+
+## 1. Load the data
+
+The first step is to load the metadata and fish observations data from the expeditions.
+
+```{r observations, eval = F}
+fish_obs_2009 <- read_csv(file.path(prj_path,                                   "data/raw/SLI/Southern_Line_Islands_2009-03_Fish_Data_ALL_QC.csv")) |> 
+  janitor::clean_names() |> 
+  filter(data_type == "QUAN") |> 
+  mutate(expedition_id = "SLI_2009")
+
+fish_obs_2017 <- read_csv(file.path(prj_path,                                    "data/raw/SLI/Southern_Line_Islands_2017-08_Fish_Data_ALL_QC.csv")) |> 
+  janitor::clean_names() |> 
+  filter(data_type == "QUAN") |> 
+  mutate(expedition_id = "SLI_2017",
+         date = lubridate::dmy(date))
+
+fish_obs_2021 <- read_csv(file.path(prj_path,                         "data/raw/SLI/Southern_Line_Islands_2021-10_Fish_Data_ALL_QC.csv")) |> 
+  janitor::clean_names() |> 
+  filter(data_type == "QUAN") |> 
+  mutate(expedition_id = "SLI_2021",
+         date = lubridate::dmy(date))
+
+## Combine
+
+past_obs <- bind_rows(fish_obs_2009, fish_obs_2017, fish_obs_2021) |> 
+  rename(count = number,
+         avg_length_cm = size,
+         taxon_code = species,
+         depth_m = depth_stratum) |> 
+  mutate(method = "Fish surveys",
+         min_length_cm = avg_length_cm,
+         max_length_cm = avg_length_cm,
+         transect_length_m = if_else(transect_type == "30mx4m_2m", 30, 25),
+         depth_strata = case_when(depth_m <= 5 ~ "Supershallow",
+                                  depth_m <= 15 ~ "Shallow",
+                                  depth_m > 15 ~ "Deep"),
+         terminal_phase = if_else(is.na(tp_size), FALSE, TRUE),
+         location = case_when(island_code == "FLI" ~ "Flint",
+                   island_code == "VOS" ~ "Vostok",
+                   island_code == "STA" ~ "Starbuck",
+                   island_code == "MAL" ~ "Malden",
+                   island_code == "MIL" ~ "Millennium",
+                   TRUE ~ island_code),
+         habitat = case_when(reef_type == "FR" ~ "Forereef",
+                           reef_type == "LG" ~ "Patchreef",
+                           TRUE ~ reef_type)) |> 
+  select(expedition_id, method, location, habitat, depth_strata, depth_m, diver, transect, transect_length_m, everything(), -project_name, -survey_type, -transect_type, -data_type, -tp_size, -tp_no, -island_code, -reef_type)
+```
+
+## 2. Stations table
+
+The first step involves creating the unique site, station, transect, and observation IDs. Each fish survey is part of a larger underwater visual census (UVC) survey where benthic cover, invertebrate densities, and other field methods (e.g eDNA, YSI) are conducted. The field that joins all these methods together is the `uvs_id` which is a combination of the `expedition_id` and the consecutive  `dive_number` in the fish survey metadata. 
+
+  - The `site_id` is combination of the `expedition_id`, the method used ("fish"), and the `dive_number`. 
+  - The `station_id` is a combination of the `site_id` and the `depth_strata`.
+  - The `transect_id` is a combination of the `station_id`, the `diver`, and the `transect_number`. 
+  = The observation ID is a combination of the `expedition_id`, "fish_obs", and a consecutive number.
+
+```{r sites}
+### Distinct sites from observations
+
+past_sites <- past_obs |> 
+  arrange(date) |> 
+  distinct(expedition_id, date, station_id, location, habitat) |> 
+  group_by(expedition_id) |> 
+  mutate(site_id = paste(expedition_id, 
+                             "fish",
+                             formatC(row_number(), flag = 0, digits = 1),
+                             sep = "_"),
+         uvs_id = paste(expedition_id, 
+                             "uvs",
+                             formatC(row_number(), flag = 0, digits = 1),
+                             sep = "_")) |> 
+  ungroup() 
+
+### Read Fish stations Rosetta Stone
+
+rosetta <- read_csv(file.path(prj_path,
+                                     "data/raw/SLI/fish_stations_pre_2023_QC.csv")) |> 
+  distinct(expedition_id, date, location, station_id, site_name) |> 
+  mutate(date = lubridate::mdy(date)) 
+
+### Read site coordinates from past metadata files
+
+meta_2009 <- readxl::read_excel(file.path(prj_path, 
+                                          "data/raw/SLI/Southern_Line_Islands_2009-03_Metadata.xlsx")) |> 
+  janitor::clean_names() |>
+  filter(fish == "YES") |> 
+  mutate(expedition_id = "SLI_2009",
+         local_time = hms::as_hms(local_time))
+
+meta_2017 <- readxl::read_excel(file.path(prj_path, "data/raw/SLI/Southern_Line_Islands_2017-08_Metadata_QC.xlsx")) |> 
+  janitor::clean_names() |>
+  filter(fish == "YES") |> 
+  mutate(expedition_id = "SLI_2017",
+         local_time = hms::as_hms(local_time))
+
+meta_2021 <- readxl::read_excel(file.path(prj_path, "data/raw/SLI/Southern_Line_Islands_2021-10_Metadata_QC.xlsx")) |> 
+  janitor::clean_names() |>
+  filter(fish == "YES") |> 
+  mutate(expedition_id = "SLI_2021",
+         local_time = hms::as_hms(as.POSIXct(paste(date, local_time))))
+
+meta_pre_2023 <- bind_rows(meta_2021, meta_2017, meta_2009) |> 
+  select(expedition_id, location = island, site_name = station_id, latitude, longitude, local_time) |> 
+  distinct()
+
+meta_pre_2023$location[meta_pre_2023$location == "Millenium"] <- "Millennium"
+
+# Add coordinates and time to Rosseta Stone
+
+rosetta <- rosetta |> 
+    left_join(meta_pre_2023)
+
+# Fill gaps manually
+
+rosetta <- rosetta |> 
+  mutate(latitude = case_when(site_name == "STA_04" ~ -5.62613,
+                              site_name == "STA_05" ~ -5.62220,
+                              site_name == "MAL_01" ~ -3.99656,
+                              site_name == "MAL_02" ~ -3.99617,
+                              site_name == "MAL_06" ~ -3.99531,
+                              site_name == "MAL_03" ~ -4.02150,
+                              TRUE ~ latitude),
+         longitude = case_when(site_name == "STA_04" ~ -155.90802,
+                               site_name == "STA_05" ~ -155.88002,
+                               site_name == "MAL_01" ~ -154.96609,
+                               site_name == "MAL_02" ~ -154.95502,
+                               site_name == "MAL_06" ~ -154.94452,
+                               site_name == "MAL_03" ~ -154.96535,
+                               TRUE ~ longitude),
+         local_time = case_when(site_name == "STA_04" ~ hms::as_hms("17:00:00"),
+                                site_name == "STA_05" ~ hms::as_hms("08:40:00"),
+                                site_name == "MAL_01" ~ hms::as_hms("12:10:00"),
+                                site_name == "MAL_02" ~ hms::as_hms("10:00:00"),
+                                site_name == "MAL_06" ~ hms::as_hms("10:10:00"),
+                                site_name == "MAL_03" ~ hms::as_hms("15:45:00"),
+                                TRUE ~ local_time))
+
+# Join the sites with the lookup table
+
+past_sites <- past_sites |> 
+  left_join(rosetta) 
+
+# Add exposure to the sites
+
+windward_flint <- c("F10", "F12", "F13", "F14")
+
+windward_mill <- c("MIL_C12", "MIL_C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22")  
+
+lagoon_mill <- c("MIL_L1", "MIL_L7")
+
+past_sites <- past_sites |> 
+  mutate(exposure = case_when(site_name %in% c(windward_flint, windward_mill) ~ "Windward",
+                   site_name %in% lagoon_mill ~ "Lagoon",
+                   location == "Vostok" ~ "Leeward",
+                   TRUE ~ "Leeward")) |> 
+  relocate(exposure, .after = habitat) |> 
+  ungroup() |> 
+  select(expedition_id, location, date, local_time, site_id, site_name, uvs_id, habitat, exposure, 
+         latitude, longitude, everything(), station_id)
+```
+
+```{r stations_table, eval = F}
+## Add that info to the obs
+
+past_obs <- past_obs |> 
+  left_join(past_sites) |> 
+  select(expedition_id, method, location, site_id, site_name, everything()) |> 
+  mutate(station_id = paste(site_id, str_to_lower(depth_strata), sep = "_"),
+         transect_id = paste(station_id, diver, transect, sep = "_")) |> 
+  group_by(expedition_id) |> 
+  mutate(observation_id = paste(expedition_id, "fish_obs",
+                                formatC(row_number(), flag = 0, digits = 4), sep = "_")) |> 
+  select(observation_id, expedition_id, method, uvs_id, location, date, local_time, site_id, station_id,
+         transect_id, everything()) |> 
+  relocate(exposure, .after = habitat) |> 
+  relocate(latitude, .after = exposure) |> 
+  relocate(longitude, .after = latitude)
+
+# Now, we aggregate by each station.
+
+past_stations <- past_obs |> 
+  mutate(country = "Kiribati") |> 
+  group_by(site_id, expedition_id, station_id, country, method, uvs_id, location, site_name,
+           depth_strata, habitat, exposure, latitude, longitude, local_time) |>  
+  summarize(date = first(date), # Here we are assuming that the first date is the correct in case of multiple
+            depth_m = round(mean(depth_m),1), # Here we take the mean depth of the station within strata
+            diver = paste(unique(diver), collapse = ", "),
+            n_transects = n_distinct(transect_id),
+            avg_transect_length = round(mean(transect_length_m),2),
+            total_survey_length = round(n_transects*avg_transect_length)) |> 
+  ungroup() |> 
+  select(-avg_transect_length) |> 
+  rename(habitat_type = habitat,
+         time = local_time)
+
+past_stations |> 
+  janitor::get_dupes(site_id) 
+```
+
+```{r}
+standard_colnames <- tbl(bq_connection, "pristine-seas.fish_surveys.stations") |>
+  filter(expedition_id == "SLI_2023") |> 
+  collect() |> 
+  colnames()
+
+past_stations |> 
+  select(all_of(standard_colnames)) 
+```
+
+```{r}
+# Upload to BigQuery
+
+bq_table_upload(
+  x = bq_table(project_id, "fish_surveys", "stations"),
+  values = past_stations,
+  write_disposition = "WRITE_APPEND"
+ )
+```
+
+## 3. Observations table
+
+The `observations` table contains clean and curated raw fish observations. 
+
+```{r observations_table, eval = F}
+# now we need to replace the codes with the accepted scientific name and calculate biomass and abundance per m2
+
+taxa_lookup <- tbl(bq_connection, "pristine-seas.fish_surveys.taxa_lookup_pacific") |> 
+  filter(!is.na(taxon_code)) |> 
+  collect()
+
+past_obs <- past_obs |> 
+  left_join(taxa_lookup |> 
+              select(taxon_code, accepted_scientific_name, common_family, trophic_group, 
+                     a, b, ltl_ratio, lmax_cm)) |> 
+  mutate(transect_area = if_else(avg_length_cm > 20, 
+                                 transect_length_m*4, 
+                                 transect_length_m*2),
+         avg_length_cm = (trunc((avg_length_cm - 0.1)/5)+1)*5 - 2,
+         abundance = count/transect_area,
+         biomass = count*a*(avg_length_cm*ltl_ratio)^b/transect_area) |> 
+  select(-a, -b, -ltl_ratio) |> 
+  relocate(accepted_scientific_name, .after = taxon_code)
+
+# Before uploading to BQ we check for entries with lengths greater than the maximum length for the species. 
+# This is a common error in the data entry process.
+obs_over_lmax <- past_obs |> 
+  filter(avg_length_cm > lmax_cm) |> 
+  mutate(diff = (avg_length_cm - lmax_cm)/lmax_cm) |> 
+  arrange(desc(diff)) |> 
+  ungroup() |> 
+  select(observation_id, taxon_code, accepted_scientific_name, diff, avg_length_cm, lmax_cm)
+
+# Select the columns in the table schema
+past_obs <- past_obs |> 
+  select(expedition_id, observation_id, station_id, transect_id, diver, accepted_scientific_name, count, 
+         min_length_cm, max_length_cm, avg_length_cm, abundance, biomass, is_terminal_phase = terminal_phase, transect_area) |> 
+  ungroup()
+
+# upload to BigQuery
+# bq_table_upload(
+#   x = bq_table(project_id, "fish_surveys", "observations"),
+#   values = past_obs,
+#   write_disposition = "WRITE_TRUNCATE"
+# )
+```
+
+## 4. Summary tables
+
+### 4.1 By station and taxa
+
+```{r summary_by_station_and_taxa, eval = F}
+taxa_lookup <- tbl(bq_connection, "pristine-seas.fish_surveys.taxa_lookup_pacific") |> 
+  filter(!is.na(taxon_code)) |> 
+  collect()
+
+observations <- tbl(bq_connection, "pristine-seas.fish_surveys.observations") |> 
+  filter(expedition_id %in% c("SLI_2009", "SLI_2017", "SLI_2021")) |>
+  collect()
+
+stations <- tbl(bq_connection, "pristine-seas.fish_surveys.stations") |> 
+  filter(expedition_id %in% c("SLI_2009", "SLI_2017", "SLI_2021")) |>
+  collect()
+
+biomass_by_transect_and_taxa <- observations |> 
+  group_by(expedition_id, station_id, transect_id, accepted_scientific_name) |> 
+  summarise(across(c("count", "abundance", "biomass"),
+                   .fns =  ~sum(.x, na.rm = T))) |> 
+  ungroup() |> 
+  pivot_wider(names_from = accepted_scientific_name, 
+              values_from = c(count,abundance, biomass), 
+              values_fill = 0, 
+              names_sep = "-")  |> 
+  pivot_longer(cols = !c(expedition_id, station_id, transect_id),
+               names_to = c("variable", "accepted_scientific_name"), 
+               names_sep = "-",
+               values_to = "value") |> 
+  pivot_wider(names_from = variable, values_from = value) |> 
+  ungroup()
+
+biomass_by_station_and_taxa <- biomass_by_transect_and_taxa |> 
+  group_by(expedition_id, station_id, accepted_scientific_name) |> 
+  summarise(total_count = sum(count),
+            across(c("abundance", "biomass"), 
+                   .fns = list("avg" = mean, "sd" = sd), 
+                   na.rm = T)) |> 
+  ungroup() 
+
+sizes_by_taxa_and_station <- observations |> 
+  group_by(station_id, accepted_scientific_name) |> 
+  summarize(min_length_cm = min(avg_length_cm),
+            max_length_cm = max(avg_length_cm),
+            avg_length_cm = weighted.mean(avg_length_cm, w = count, na.rm = T))
+
+biomass_by_station_and_taxa <- biomass_by_station_and_taxa |> 
+  left_join(stations |> 
+              group_by(station_id, location, country, exposure, habitat_type, depth_strata) |> 
+              summarize(depth_m = mean(depth_m)) |> 
+              ungroup()) |> 
+  left_join(taxa_lookup |> 
+              distinct(accepted_scientific_name, family, common_family, trophic_group)) |> 
+  left_join(sizes_by_taxa_and_station) |> 
+  select(expedition_id, station_id, location, country, depth_m, depth_strata, exposure, habitat_type,
+         accepted_scientific_name, family, common_family, trophic_group, 
+         total_count, avg_length_cm, 
+         avg_abundance = abundance_avg, std_abundance = abundance_sd,
+         avg_biomass = biomass_avg, std_biomass = biomass_sd) |> 
+  mutate_if(is.numeric, round, 4) 
+
+# upload to BigQuery
+#  bq_table_upload(
+#    x = bq_table(project_id, "fish_surveys", "summary_by_station_and_taxa"),
+#    values = biomass_by_station_and_taxa,
+#    write_disposition = "WRITE_TRUNCATE"
+#  )
+```
+
+### 4.2 By station
+
+```{r summary_by_station, eval = F}
+summary_by_transect <- biomass_by_transect_and_taxa |> 
+  group_by(expedition_id, station_id, transect_id) |> 
+  summarize(n_taxa = n_distinct(accepted_scientific_name[abundance > 0]),
+            count = sum(count),
+            abundance = sum(abundance),
+            biomass = sum(biomass)) |> 
+  left_join(stations |> distinct(station_id, location, exposure, habitat_type)) |> 
+  ungroup() 
+
+summary_by_station <- summary_by_transect |> 
+  group_by(station_id) |> 
+  summarize(across(c("abundance",  "biomass"), .fns = list("mean" = mean, "sd" = sd), na.rm = T)) |> 
+  rename(avg_abundance = "abundance_mean",
+         std_abundance = "abundance_sd",
+         avg_biomass = "biomass_mean",
+         std_biomass = "biomass_sd") 
+
+# Now lets calculate biomass by trophic group and station
+
+biomass_by_station_and_trophic <- biomass_by_transect_and_taxa |> 
+  left_join(taxa_lookup |> select(accepted_scientific_name, trophic_group)) |>
+  group_by(station_id, transect_id, trophic_group) |>
+  summarize(biomass = sum(biomass)) |> 
+  ungroup() |> 
+  group_by(station_id, trophic_group) |> 
+  summarize(across(c("biomass"), 
+                   .fns = list("mean" = mean, "sd" = sd), na.rm = T)) 
+
+summary_by_station <- biomass_by_station_and_taxa |> 
+  group_by(expedition_id, station_id, location, country, depth_m, depth_strata, exposure, habitat_type) |>
+  summarize(species_richness = n_distinct(accepted_scientific_name[total_count > 0])) |> 
+  ungroup() |> 
+  left_join(summary_by_station) |> 
+  # add biomass by trophic group
+  left_join(biomass_by_station_and_trophic |> 
+              pivot_wider(names_from = trophic_group, 
+                          values_from = c(biomass_mean, biomass_sd), 
+                          values_fill = 0, 
+                          names_sep = "-") |> 
+              rename(avg_herb_biomass = "biomass_mean-Herbivores",
+                     std_herb_biomass = "biomass_sd-Herbivores",
+                     avg_plank_biomass = "biomass_mean-Planktivore",
+                     std_plank_biomass = "biomass_sd-Planktivore",
+                     avg_low_carn_biomass = "biomass_mean-Lower-carnivores",
+                     std_low_carn_biomass = "biomass_sd-Lower-carnivores",
+                     avg_top_pred_biomass = "biomass_mean-Top-predators",
+                     std_top_pred_biomass = "biomass_sd-Top-predators",
+                     avg_shark_biomass = "biomass_mean-Top-predator sharks",
+                     std_shark_biomass = "biomass_sd-Top-predator sharks") |> 
+              select(station_id, contains("herb"), contains("plank"), 
+                     contains("low_carn"), contains("top_pred"), contains("shark"))) 
+
+summary_by_station |> 
+  filter(exposure == "Leeward", !location %in% c("Malden", "Starbuck")) |> 
+  group_by(location, expedition_id) |>
+  summarise(mean(avg_biomass))
+
+# upload to BigQuery
+#  bq_table_upload(
+#    x = bq_table(project_id, "fish_surveys", "summary_by_station"),
+#    values = summary_by_station,
+#    write_disposition = "WRITE_TRUNCATE"
+#  )
+```
+
+### 4.2 By taxa
+
+```{r summary_by_taxa, eval = F}
+summary_by_taxa <- biomass_by_station_and_taxa |> 
+  filter(!location %in% c("Malden", "Starbuck")) |> 
+  group_by(expedition_id, location, exposure, accepted_scientific_name, family, common_family, trophic_group) |> 
+  summarize(total_count = sum(total_count),
+            min_length_cm = min(avg_length_cm),
+            max_length_cm = max(avg_length_cm),
+            avg_length_cm = mean(avg_length_cm),
+            across(c("avg_abundance", "avg_biomass"), 
+                   .fns = list("mean" = mean, "sd" = sd), na.rm = T),
+            n_stations = n_distinct(station_id),
+            freq_occ = 100*n_distinct(station_id[avg_abundance >0])/n_stations) |> 
+  ungroup() |> 
+  rename(avg_abundance = avg_abundance_mean,
+         std_abundance = avg_abundance_sd,
+         avg_biomass = avg_biomass_mean,
+         std_biomass = avg_biomass_sd) |> 
+  mutate_if(is.numeric, round, 4)
+
+summary_by_taxa |> 
+  group_by(location, expedition_id, exposure) |> 
+  summarize(avg_biomass = sum(avg_biomass, na.rm = T)) |> 
+  ungroup() |> 
+  filter(exposure == "Leeward")
+
+# upload to BigQuery
+# bq_table_upload(
+#   x = bq_table(project_id, "fish_surveys", "summary_by_taxa"),
+#   values = summary_by_taxa,
+#   write_disposition = "WRITE_TRUNCATE"
+# )
+```
+

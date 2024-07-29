@@ -219,3 +219,15 @@ bigrquery::bq_table_upload("pristine-seas.submersible.deepsee_dives",
 ```
 
 
+```{r}
+all_dives <- tbl(bq_connection, "pristine-seas.submersible.deepsee_dives") |> 
+  filter(!is.na(ps_site_id)) |> 
+  collect()
+
+all_dives |> 
+  group_by(ps_expedition_id) |>
+  summarize(n = n(),
+            time = seconds_to_period(sum(bottom_time, na.rm = T))) |> 
+  arrange(desc(n))
+```
+

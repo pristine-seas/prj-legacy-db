@@ -1,0 +1,1079 @@
+---
+title: "Pristine Seas Scientific Expeditions Database"
+date: today
+format: 
+  html:
+    theme: minty
+    self-contained: true
+    code-fold: true
+    toc: true 
+    toc-depth: 4
+    toc-location: right
+---
+
+```{r setup, message = F, warning = F, fig.width = 10, fig.height = 10, echo = F}
+options(scipen = 999)
+
+library(PristineSeasR)
+library(paletteer)
+library(sf)
+library(bigrquery)
+library(gt)
+library(tidyverse)
+library(pointblank)
+
+knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
+
+set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-legacy-db")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+project_id <- "pristine-seas"
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), 
+                                project = project_id)
+```
+
+The Pristine Seas Database is a comprehensive scientific repository designed to store and manage data collected from a series of global scientific expeditions aimed at studying and conserving marine ecosystems. This database facilitates the exploration, analysis, and sharing of data across multiple years, locations, and scientific methods. The ultimate goal is to support conservation efforts by providing robust, high-quality data to researchers, conservationists, and policymakers.
+
+# Database Objectives
+
+The primary objective of the Pristine Seas Database is to support conservation efforts by providing a robust, high-quality dataset that can grow with future expeditions. This includes:
+
+-   **Facilitating Research**: By providing comprehensive and standardized data, the database supports a wide range of scientific research on marine ecosystems.
+-   **Enhancing Conservation Efforts**: Detailed and accurate data helps conservationists develop effective strategies to protect marine environments.
+-   **Promoting Collaboration**: The database enables collaboration between researchers, conservationists, and policymakers by providing a shared repository of valuable data.
+-   **Ensuring Scalability**: Designed to be modular and scalable, the database can easily incorporate new data from future expeditions without major restructuring.
+
+# Database Structure
+
+The database is organized into datasets for each scientific method, starting with the fish surveys dataset. Additionally, reference tables such as the `expeditions` table are maintained separately to provide consistent and reusable information across different datasets. Here’s an overview of the main components:
+
+## [Expeditions Table](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sexpeditions!3sexpeditions)
+
+**Purpose**: To capture metadata about each scientific expedition, including details such as the country of the expedition, partner organizations, the ship used, and the expedition leader.
+
+**Fields**:
+
+-   `expedition_number` (INTEGER, REQUIRED): Consecutive numbering of Pristine Seas expeditions.
+-   `expedition_id` (STRING, REQUIRED): Unique identifier for each expedition, combination of the country ISO3 code and the year of the expedition.
+-   `expedition_name` (STRING, REQUIRED): Name of the expedition.
+-   `country` (STRING, REQUIRED): Country where the expedition took place.
+-   `start_date` (DATE, REQUIRED): Start date of the expedition.
+-   `end_date` (DATE, REQUIRED): End date of the expedition.
+-   `science_lead` (STRING, REQUIRED): Name of the science lead.
+-   `expedition_leader` (STRING, REQUIRED): Name of the expedition leader.
+-   `ship_name` (STRING, REQUIRED): Name of the ship used for the expedition.
+-   `partners` (STRING, REQUIRED): Partner organizations involved in the expedition.
+-   `description` (STRING, NULLABLE): Brief description of the expedition.
+
+```{r expeditions_tbl, message = F, warning = F, echo = F}
+expeditions_schema <- list(
+  bq_field(
+    name = "expedition_number", 
+    type = "INTEGER", 
+    mode = "REQUIRED", 
+    description = "Consecutive numbering of Pristine Seas expeditions"
+  ),
+  bq_field(
+    name = "expedition_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for each expedition, combination of the country ISO3 code and the year of the expedition"
+  ),
+  bq_field(
+    name = "expedition_name", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Name of the expedition"
+  ),
+  bq_field(
+    name = "country", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Country where the expedition took place"
+  ),
+  bq_field(
+    name = "start_date", 
+    type = "DATE", 
+    mode = "REQUIRED", 
+    description = "Start date of the expedition"
+  ),
+  bq_field(
+    name = "end_date", 
+    type = "DATE", 
+    mode = "REQUIRED", 
+    description = "End date of the expedition"
+  ),
+  bq_field(
+    name = "science_lead", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Name of the science lead"
+  ),
+  bq_field(
+    name = "expedition_leader", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Name of the expedition leader"
+  ),
+  bq_field(
+    name = "ship_name", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Name of the ship used for the expedition"
+  ),
+  bq_field(
+    name = "partners", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Partner organizations involved in the expedition"
+  ),
+  bq_field(
+    name = "description", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Brief description of the expedition"
+  )
+)
+
+# Create the fish metadata table
+bq_table_create(
+  bq_table(project_id, "expeditions", "expeditions"),
+  fields = expeditions_schema
+)
+```
+
+```{r upload_exp_data, message = F, warning = F, echo = F}
+# Load data from the CSV file
+expeditions_data <- read_csv(file.path(ps_science_path,
+                             "data management/expeditions.csv"))
+
+
+expeditions_data <- expeditions_data |> 
+  janitor::clean_names() |> 
+  separate(date, into = c("start_date", "end_date"), sep = "-") |> 
+  mutate(across(contains("date"), lubridate::ymd),
+         description = NA_character_)
+
+# QA/QC with pointblank: Validate the data
+
+agent <- create_agent(expeditions_data) %>%
+  col_vals_not_null(vars(expedition_number, expedition_id, expedition_name, start_date, end_date, country, science_lead, expedition_leader, ship_name, partners, description)) %>%
+  col_is_numeric(vars(expedition_number)) %>%
+  col_is_date(vars(start_date, end_date)) %>%
+  col_is_character(vars(expedition_id, expedition_name, country, science_lead, expedition_leader, ship_name, partners, description)) %>%
+  interrogate()
+
+# Print the validation report
+agent
+
+# If there are any failures, stop the process
+if (all_passed(agent) == FALSE) {
+  stop("Data validation failed. Please check the QA/QC report.")
+}
+
+# Convert data frame to BigQuery table
+
+bq_table(project_id, "expeditions", "expeditions") |> 
+  bq_table_upload(expeditions_data)
+```
+
+## [Fish Surveys dataset](https://console.cloud.google.com/bigquery?ws=!1m4!1m3!3m2!1spristine-seas!2sfish_surveys)
+
+The fish surveys dataset consists of three main tables: `stations`, `observations`, and `taxa_lookup`. These tables capture detailed information about fish surveys conducted during Pristine Seas expeditions, including metadata about survey sites, observed fish species, and taxonomic information. The dataset aims to provide a comprehensive view of fish biodiversity and abundance across locations explored.In addition, three summary tables, `summary_by_station_and_taxa`, `summary_by_station`, and `summary_by_taxa` aggregate and summarize the data for further analysis and visualization.
+
+### [Stations table](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sfish_surveys!3sstations)
+
+**Purpose**: To store detailed metadata about each fish survey station, including location, depth, environmental conditions, and other survey details.
+
+**Fields**:
+
+-   `site_id` (STRING, REQUIRED): Unique identifier for the site, composed of the expedition country ISO code, year, scientific method, and site number e.g "USA_2024_fish_01".
+-   `expedition_id` (STRING, REQUIRED): Unique identifier for the expedition, composed of the country ISO3 code and the year of the expedition. e.g., "USA_2024"
+-   `station_id` (STRING, REQUIRED): Unique identifier for the station, e.g., 'USA_2024_fish_01_shallow'.
+-   `country` (STRING, REQUIRED): Country where the expedition took place.
+-   `method` (STRING, REQUIRED): Method used for the survey, e.g., 'fish'.
+-   `dive_id` (INTEGER, REQUIRED): Expedition dive id (sequential number for each expedition). Used to join the fish surveys to the benthic surveys, eDNA, and other methods.
+-   `latitude` and `longitude` (FLOAT, REQUIRED): Geographic coordinates of the site (in decimal degrees).
+-   `location` (STRING, NULLABLE): General location of the site.
+-   `alternative_site_ids` (STRING, NULLABLE): Alternative identifiers for the site.
+-   `depth_m` (FLOAT, NULLABLE): Numeric depth of the station (in meters).
+-   `depth_strata` (STRING, NULLABLE): Depth strata of the station: deep (\>15m), shallow (5-15m), supershallow (\<5m).
+-   `habitat_type` (STRING, NULLABLE): Type of habitat surveyed, e.g., forereef, backreef, patchreef, fringing reef, seagrass.
+-   `exposure` (STRING, NULLABLE): Location of the site relative to the prevalent seas and wind.
+-   `date` (DATE, NULLABLE): Local date of the survey.
+-   `time` (TIME, NULLABLE): Local time of the survey.
+-   `diver` (STRING, NULLABLE): Name of the diver conducting the station
+-   `n_transects` (INTEGER, NULLABLE): Number of transects surveyed at the station.
+-   `total_survey_length` (FLOAT, NULLABLE): Total length surveyed at the station (in meters).
+-   `description` (STRING, NULLABLE): Description of the site and station
+
+```{r fish_stations_tbl, message = F, warning = F, echo = F, eval = F}
+# Define the fish metadata table schema
+fish_stations_schema <- list(
+  list(
+    name = "expedition_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the expedition, composed of the country ISO3 code and the year of the expedition."
+  ),
+  list(
+    name = "country", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Country where the expedition took place."
+  ),
+  list(
+    name = "method", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Method used for the survey, e.g., 'fish'."
+  ),
+  list(
+    name = "location", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "General location of the site."
+  ),
+  list(
+    name = "uvs_id", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Underwater Visual Survey ID. Used to link the fish surveys to the other UVS data."
+  ),
+  list(
+    name = "site_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the site, composed of the expedition country ISO code, year, scientific method, and site number."
+  ),
+  list(
+    name = "site_name", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Named of the site (if exists) used across expeditions"
+  ),
+  list(
+    name = "station_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the station, e.g., 'USA_2024_fish_01_shallow'."
+  ),
+   list(
+    name = "depth_m", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Numeric depth of the station (in meters)."
+  ),
+  list(
+    name = "depth_strata", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Depth strata of the station: deep (>15m), shallow (5-15m), supershallow (<5m)."
+  ),
+    list(
+    name = "date", 
+    type = "DATE", 
+    mode = "NULLABLE", 
+    description = "Date of the survey."
+  ),
+  list(
+    name = "time", 
+    type = "TIME", 
+    mode = "NULLABLE", 
+    description = "Time of the survey."
+  ),
+   list(
+    name = "latitude", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Latitude of the site (in decimal degrees)."
+  ),
+  list(
+    name = "longitude", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Longitude of the site (in decimal degrees)."
+  ),
+  list(
+    name = "habitat_type", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Type of habitat surveyed, e.g., forereef, backreef, patchreef, fringing reef, seagrass."
+  ),
+  list(
+    name = "exposure", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Location of the site relative to the prevalent seas and wind."
+  ),
+  list(
+    name = "diver", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Name of the diver(s) conducting the survey."
+  ),
+  list(
+    name = "n_transects", 
+    type = "INTEGER", 
+    mode = "NULLABLE", 
+    description = "Number of transects surveyed at the station."
+  ),
+  list(
+    name = "total_survey_length", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Total length surveyed at the station (in meters)."
+  ),
+  list(
+    name = "description", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Description of the site and station."
+  )
+)
+
+# Create the fish metadata table
+bq_table_create(
+  bq_table(project_id, "fish_surveys", "stations"),
+  fields = fish_stations_schema
+)
+```
+
+### [Observations table](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sfish_surveys!3sobservations)
+
+**Purpose**: To capture detailed observations of fish species recorded during the surveys, including counts, sizes, and calculated metrics such as abundance and biomass.
+
+**Fields**:
+
+-   `expedition_id` (STRING, REQUIRED): Unique identifier for the expedition.
+-   `observation_id` (STRING, REQUIRED): Unique identifier for each observation, composed of the transect_id and a sequential number.
+-   `station_id` (STRING, REQUIRED): Unique identifier for the station, composed of site_id and depth_strata, e.g., 'USA_2024_fish_01_shallow'.
+-   `transect_id` (STRING, REQUIRED): Unique identifier for the transect within the station, composed of station_id and a letter representing the transect, e.g., 'USA_2024_fish_01_shallow_A'.
+-   `diver` (STRING, REQUIRED): Name of the diver who made the observation.
+-   `accepted_scientific_name` (STRING, REQUIRED): Scientific name of the species observed.
+-   `count` (INTEGER, NULLABLE): Number of individuals observed.
+-   `min_length_cm`, `max_length_cm`, and `avg_length_cm` (FLOAT, NULLABLE): Minimum, maximum, and average length of individuals observed (in cm).
+-   `is_terminal_phase` (BOOLEAN, NULLABLE): Indicates if the observed fish is in terminal phase, applies only to parrotfishes.
+-   `transect_area` (FLOAT, NULLABLE): Area of the transect (in square meters).
+-   `abundance` (FLOAT, NULLABLE): Numerical abundance (in individuals per m2).
+-   `biomass` (FLOAT, NULLABLE): Biomass (in grams per m2).
+-   `notes` (STRING, NULLABLE): Additional notes about the survey.
+
+```{r fish_obs_tbl}
+# Define the fish observations table schema
+fish_observations_schema <- list(
+  list(
+    name = "expedition_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the expedition."
+  ),
+  list(
+    name = "observation_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for each observation, composed of the transect_id and a sequential number."
+  ),
+  list(
+    name = "station_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the station, composed of site_id and depth_strata, e.g., 'USA_2024_fish_01_shallow'."
+  ),
+  list(
+    name = "transect_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the transect within the station, composed of station_id and a letter representing the transect, e.g., 'USA_2024_fish_01_shallow_A'."
+  ),
+  list(
+    name = "diver", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Name of the diver who made the observation."
+  ),
+  list(
+    name = "accepted_scientific_name", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Scientific name of the species observed."
+  ),
+  list(
+    name = "count", 
+    type = "INTEGER", 
+    mode = "NULLABLE", 
+    description = "Number of individuals observed."
+  ),
+  list(
+    name = "min_length_cm", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Minimum length of individuals observed (in cm)."
+  ),
+  list(
+    name = "max_length_cm", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Maximum length of individuals observed (in cm)."
+  ),
+  list(
+    name = "avg_length_cm", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Average length of individuals observed (in cm)."
+  ),
+  list(
+    name = "is_terminal_phase", 
+    type = "BOOLEAN", 
+    mode = "NULLABLE", 
+    description = "Indicates if the observed fish is in terminal phase, applies only to parrotfishes."
+  ),
+  list(
+    name = "transect_area", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Area of the transect (in square meters)."
+  ),
+  list(
+    name = "abundance", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Numerical abundance (in individuals per m2)."
+  ),
+  list(
+    name = "biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Biomass (in grams per m2)."
+  ),
+  list(
+    name = "notes", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Additional notes about the survey."
+  )
+)
+
+# Create the fish observations table
+bq_table_create(
+  bq_table(project_id, "fish_surveys", "observations"),
+  fields = fish_observations_schema
+)
+```
+
+### [Taxa lookup table](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sfish_surveys!3staxa_lookup_pacific)
+
+**Purpose**: To provide a comprehensive reference for species observed during the surveys, including taxonomic information, length-weight parameters, and other relevant details.
+
+**Fields**:
+
+-   `taxon_code` (STRING, REQUIRED): Original code representing the species.
+-   `original_scientific_name` (STRING, REQUIRED): Original scientific name of the species.
+-   `status` (STRING, NULLABLE): Indicates if the scientific name has been updated from the original.
+-   `accepted_scientific_name` (STRING, REQUIRED): Accepted updated scientific name of the species.
+-   `taxon_rank` (STRING, NULLABLE): Taxonomic rank of the identified taxa, e.g., species, genus, family.
+-   `genus`, `family`, `order`, `class`, `phylum`, `kingdom` (STRING, NULLABLE): Taxonony of the species.
+-   `common_family` (STRING, NULLABLE): Common name of the family.
+-   `trophic_group` (STRING, NULLABLE): Trophic group of the species.
+-   `detailed_trophic_group` (STRING, NULLABLE): More detailed categorization of trophic group.
+-   `trophic_level` (FLOAT, NULLABLE): Trophic level of the species (from Fishbase).
+-   `consumer` (STRING, NULLABLE): Consumer type of the species, e.g., primary consumer, secondary consumer.
+-   `lmax`, `lmax_source`  (FLOAT, NULLABLE): Maximum reported length of the species (in cm) and it's source.
+-   `a`, `b`, and `ltl_ratio` (FLOAT, NULLABLE): Length-weight parameters and length-to-length ratio used in biomass calculation.
+-   `lw_source` (STRING, NULLABLE): Source of the length-weight parameters.
+-   `worms_id` (INTEGER, NULLABLE): WORMS ID for tracking taxonomy.
+-   `fishbase_id` (INTEGER, NULLABLE): Fishbase ID.
+
+```{r fish_taxa_tbl}
+# Define the taxa lookup table schema
+taxa_lookup_schema <- list(
+  list(name = "taxon_code",
+       type = "STRING",
+       mode = "REQUIRED",
+       description = "Original code representing the species."),
+  list(name = "original_scientific_name",
+       type = "STRING",
+       mode = "REQUIRED",
+       description = "Original scientific name of the species."),
+  list(name = "status",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Indicates if the scientific name has been updated from the original."),
+  list(name = "accepted_scientific_name",
+       type = "STRING",
+       mode = "REQUIRED",
+       description = "Accepted updated scientific name of the species."),
+  list(name = "taxon_rank",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Taxonomic rank of the identified taxa, e.g., species, genus, family."),
+  list(name = "genus",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Genus of the species."),
+  list(name = "family",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Family of the species."),
+  list(name = "order",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Order of the species."),
+  list(name = "class",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Class of the species."),
+  list(name = "phylum",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Phylum of the species."),
+  list(name = "kingdom",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Kingdom of the species."),
+  list(name = "common_family",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Common name of the family."),
+  list(name = "trophic_group",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Trophic group of the species."),
+  list(name = "detailed_trophic_group",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "More detailed categorization of the trophic group."),
+  list(name = "trophic_level",
+       type = "FLOAT",
+       mode = "NULLABLE",
+       description = "Trophic level of the species (from Fishbase)."),
+  list(name = "consumer",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Consumer type of the species, e.g., primary consumer, secondary consumer."),
+  list(name = "lmax",
+       type = "FLOAT",
+       mode = "NULLABLE",
+       description = "Maximum reported length of the species (in cm)."),
+  list(name = "lmax_source",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Source of the maximum reported length."),
+  list(name = "a",
+       type = "FLOAT",
+       mode = "NULLABLE",
+       description = "Length-weight parameter used in biomass calculation."),
+  list(name = "b",
+       type = "FLOAT",
+       mode = "NULLABLE",
+       description = "Length-weight parameter used in biomass calculation."),
+  list(name = "ltl_ratio",
+       type = "FLOAT",
+       mode = "NULLABLE",
+       description = "Length-to-length ratio used in biomass calculation."),
+  list(name = "lw_source",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "Source of the length-weight parameters."),
+  list(name = "worms_id",
+       type = "STRING",
+       mode = "NULLABLE",
+       description = "WORMS ID for tracking taxonomy."),
+  list(name = "fishbase_id",
+       type = "INTEGER",
+       mode = "NULLABLE",
+       description = "Fishbase ID.")
+)
+
+# Create the taxa lookup table
+bq_table_create(
+  bq_table(project_id, "fish_surveys", "taxa_lookup_pacific"),
+  fields = taxa_lookup_schema
+)
+```
+
+### Summary tables
+
+#### [By station & taxa](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sfish_surveys!3ssummary_by_station_and_taxa)
+
+**Purpose**:
+
+To provide detailed aggregated information about each individual taxa (by scientific name) observed at each station, including total counts, average lengths, total biomass, abundance, location, and expedition details, along with additional context from the `stations` and `taxa_lookup` tables.
+
+**Fields**:
+
+-   `expedition_id` (STRING, REQUIRED): Unique identifier for the expedition.
+-   `station_id` (STRING, REQUIRED): Unique identifier for the station.
+-   `location` (STRING, REQUIRED): The geographical location of the station.
+-   `country` (STRING, REQUIRED): The country where the station is located.
+-   `latitude` and `longitude` (FLOAT, REQUIRED): Geographic coordinates of the site (in decimal degrees).
+-   `depth_m` (FLOAT, REQUIRED): Depth of the station in meters.
+-   `depth_strata` (STRING, REQUIRED): Depth strata of the station (e.g., deep, shallow, supershallow).
+-   `exposure` (STRING, REQUIRED): Exposure of the station (e.g., relative to prevailing seas and wind).
+-   `habitat_type` (STRING, REQUIRED): Habitat type of the station (e.g., forereef, backreef, patchreef, fringing reef, seagrass).
+-   `scientific_name` (STRING, REQUIRED): The scientific name of the observed species.
+-   `family` (STRING, REQUIRED): Family of the observed species.
+-   `common_family` (STRING, REQUIRED): Common family name of the observed species.
+-   `trophic_group` (STRING, REQUIRED): Trophic group of the observed species.
+-   `total_count` (INTEGER, REQUIRED): Total number of individuals observed for each taxa at the station.
+-   `avg_length_cm` (FLOAT, REQUIRED): Average length of the observed species in the taxa at the station (in cm).
+-   `avg_abundance`, `std_abundance` (FLOAT, REQUIRED): Average and standard deviation of the number of individuals of the observed taxa at the station (individuals per square meter).
+-   (FLOAT, NULLABLE): Standard deviation of the average number of individuals.
+-   `avg_biomass`, `std_biomass` (FLOAT, REQUIRED): Average and standard deviation of biomass of the observed taxa at the station (in grams per square meter).
+
+```{r summary_by_station_and_taxa_tbl}
+# Define the schema for the summary_by_station_and_taxa table
+summary_by_station_and_taxa_schema <- list(
+  list(
+    name = "expedition_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the expedition."
+  ),
+  list(
+    name = "station_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the station."
+  ),
+  list(
+    name = "location", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The geographical location of the station."
+  ),
+  list(
+    name = "country", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The country where the station is located."
+  ),
+  list(
+    name = "latitude", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Geographic coordinate of the station."
+  ),
+  list(
+    name = "longitude", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Geographic coordinate of the station."
+  ),
+  list(
+    name = "depth_m", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Depth of the station in meters."
+  ),
+  list(
+    name = "depth_strata", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Depth strata of the station (e.g., deep, shallow, supershallow)."
+  ),
+  list(
+    name = "exposure", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Exposure of the station (e.g., relative to prevailing seas and wind)."
+  ),
+  list(
+    name = "habitat_type", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Habitat type of the station (e.g., forereef, backreef, patchreef, fringing reef, seagrass)."
+  ),
+  list(
+    name = "accepted_scientific_name", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The accepted scientific name of the observed species."
+  ),
+  list(
+    name = "family", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Family of the observed species."
+  ),
+  list(
+    name = "common_family", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Common family name of the observed species."
+  ),
+  list(
+    name = "trophic_group", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Trophic group of the observed species."
+  ),
+  list(
+    name = "total_count", 
+    type = "INTEGER", 
+    mode = "REQUIRED", 
+    description = "Total number of individuals observed for each taxa at the station."
+  ),
+  list(
+    name = "avg_length_cm", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average length of the observed species in the taxa at the station (in cm)."
+  ),
+  list(
+    name = "avg_abundance", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average number of individuals of the observed species in the taxa at the station (individuals per square meter)."
+  ),
+  list(
+    name = "std_abundance", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of the average number of individuals."
+  ),
+  list(
+    name = "avg_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of the observed species in the taxa at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of the average biomass."
+  )
+)
+
+# Create the biomass_by_station_and_taxa table in BigQuery
+bq_table_create(
+  bq_table(project_id, "fish_surveys", "summary_by_station_and_taxa"),
+  fields = summary_by_station_and_taxa_schema
+)
+```
+
+#### [By station](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sfish_surveys!3ssummary_by_station)
+
+**Purpose**: The `summary_by_station` table provides an aggregated summary of each station, including species richness, average abundance, average biomass, and additional key information about the station. This table also includes summary metrics of biomass for each main trophic group, along with their standard deviations.
+
+**Fields**:
+
+-   `expedition_id` (STRING, REQUIRED): Unique identifier for the expedition.
+-   `station_id` (STRING, REQUIRED): Unique identifier for the station.
+-   `location` (STRING, REQUIRED): The geographical location of the station.
+-   `country` (STRING, REQUIRED): The country where the station is located.
+-   `latitude` and `longitude` (FLOAT, REQUIRED): Geographic coordinates of the station (in decimal degrees).
+-   `depth_m` (FLOAT, REQUIRED): Depth of the station in meters.
+-   `depth_strata` (STRING, REQUIRED): Depth strata of the station (e.g., deep, shallow, supershallow).
+-   `exposure` (STRING, REQUIRED): Exposure of the station (e.g., relative to prevailing seas and wind).
+-   `habitat_type` (STRING, REQUIRED): Habitat type of the station (e.g., forereef, backreef, patchreef, fringing reef, seagrass).
+-   `species_richness` (INTEGER, REQUIRED): Total number of different species observed at the station.
+-   `avg_abundance`, `std_abundance` (FLOAT, REQUIRED): Average and standard deviation of the number of individuals observed per square meter at the station.
+-   `avg_biomass`, `std_biomass` (FLOAT, REQUIRED): Average and standard deviation of the biomass observed per square meter at the station (in grams per square meter).
+-   `avg_herb_biomass`, `std_herb_biomass` (FLOAT, REQUIRED): Average and standard deviation of herbivore biomass at the station (in grams per square meter).
+-   `avg_plank_biomass`, `std_plank_biomass` (FLOAT, REQUIRED): Average and standard deviation of planktivore biomass observed at the station (in grams per square meter).
+-   `avg_low_carn_biomass`, `std_low_carn_biomass` (FLOAT, REQUIRED): Average and standard deviation of lower carnivores biomass at the station (in grams per square meter).
+-   `avg_top_pred_biomass`, `std_top_pred_biomass` (FLOAT, REQUIRED): Average and standard deviation of top predator biomass at the station (in grams per square meter).
+-   `avg_shark_biomass`, `std_shark_biomass` (FLOAT, REQUIRED): Average and standard deviation of shark biomass at the station (in grams per square meter).
+
+```{r summary_by_station_tbl}
+# Define the schema for the summary_by_station table
+summary_by_station_schema <- list(
+  list(
+    name = "expedition_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the expedition."
+  ),
+  list(
+    name = "station_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the station."
+  ),
+  list(
+    name = "location", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The geographical location of the station."
+  ),
+  list(
+    name = "country", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The country where the station is located."
+  ),
+  list(
+    name = "latitude", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Geographic coordinate of the station."
+  ),
+  list(
+    name = "longitude", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Geographic coordinate of the station."
+  ),
+  list(
+    name = "depth_m", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Depth of the station in meters."
+  ),
+  list(
+    name = "depth_strata", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Depth strata of the station (e.g., deep, shallow, supershallow)."
+  ),
+  list(
+    name = "exposure", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Exposure of the station (e.g., relative to prevailing seas and wind)."
+  ),
+  list(
+    name = "habitat_type", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Habitat type of the station (e.g., forereef, backreef, patchreef, fringing reef, seagrass)."
+  ),
+  list(
+    name = "species_richness", 
+    type = "INTEGER", 
+    mode = "REQUIRED", 
+    description = "Total number of different species observed at the station."
+  ),
+  list(
+    name = "avg_abundance", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average number of individuals observed per square meter at the station."
+  ),
+  list(
+    name = "std_abundance", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of the average abundance."
+  ),
+  list(
+    name = "avg_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass observed per square meter at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of the average biomass."
+  ),
+  list(
+    name = "avg_herb_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of herbivores observed at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_herb_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of herbivore biomass."
+  ),
+  list(
+    name = "avg_plank_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of planktivores observed at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_plank_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of planktivore biomass."
+  ),
+  list(
+    name = "avg_low_carn_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of lower carnivores observed at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_low_carn_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of lower carnivore biomass."
+  ),
+  list(
+    name = "avg_top_pred_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of top predators observed at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_top_pred_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of top predator biomass."
+  ),
+  list(
+    name = "avg_shark_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of sharks observed at the station (in grams per square meter)."
+  ),
+  list(
+    name = "std_shark_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of shark biomass."
+  )
+)
+
+bq_table_create(
+  bq_table(project_id, "fish_surveys", "summary_by_station"),
+  fields = summary_by_station_schema
+)
+```
+
+#### [By taxa](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sfish_surveys!3ssummary_by_taxa)
+
+**Purpose**: The `summary_by_taxa` table provides an aggregated summary for each fish taxa in each location keeping distinct exposure separate (leeward vs lagoon vs windward). This includes key metrics such as total counts, average lengths, total biomass, average abundance, and additional statistics, providing a comprehensive overview of each species across different locations.
+
+**Fields**:
+
+-   `expedition_id` (STRING, REQUIRED): Unique identifier for the expedition.
+-   `location` (STRING, REQUIRED): The geographical location of the station.
+-   `exposure` (STRING, NULLABLE): Location of the site relative to the prevalent seas and wind.
+-   `accepted_scientific_name` (STRING, REQUIRED): The scientific name of the observed taxa.
+-   `family` (STRING, REQUIRED): Family of the observed taxa.
+-   `common_family` (STRING, REQUIRED): Common family name of the observed taxa.
+-   `trophic_group` (STRING, REQUIRED): Trophic group of the observed taxa.
+-   `total_count` (INTEGER, REQUIRED): Total number of individuals observed for each taxa.
+-   `min_length_cm`, `max_length_cm`, `avg_length_cm` (FLOAT, REQUIRED): Minimum, maximum, and average length of the observed taxa (in cm).
+-   `avg_abundance`, `std_abundance` (FLOAT, REQUIRED): Average and standard deviation of number of individuals of the observed taxa (individuals per square meter).
+-   (FLOAT, NULLABLE): Standard deviation of the average abundance.
+-   `avg_biomass`, `std_biomass` (FLOAT, REQUIRED): Average and standard deviation of the biomass of the observed taxa (in grams per square meter).
+-   `n_stations` (INTEGER, REQUIRED): Number of stations sampled in each location.
+-   `freq_occ` (FLOAT, REQUIRED): Frequency of occurrence of the taxa across stations.
+
+```{r summary_by_taxa_tbl}
+summary_by_taxa_schema <- list(
+  list(
+    name = "expedition_id", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Unique identifier for the expedition."
+  ),
+  list(
+    name = "location", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The geographical location of the station."
+  ),
+  list(
+    name = "exposure", 
+    type = "STRING", 
+    mode = "NULLABLE", 
+    description = "Location of the site relative to the prevalent seas and wind."
+  ),
+  list(
+    name = "accepted_scientific_name", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "The scientific name of the observed taxa."
+  ),
+  list(
+    name = "family", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Family of the observed taxa."
+  ),
+  list(
+    name = "common_family", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Common family name of the observed taxa."
+  ),
+  list(
+    name = "trophic_group", 
+    type = "STRING", 
+    mode = "REQUIRED", 
+    description = "Trophic group of the observed taxa."
+  ),
+  list(
+    name = "total_count", 
+    type = "INTEGER", 
+    mode = "REQUIRED", 
+    description = "Total number of individuals observed for each taxa."
+  ),
+  list(
+    name = "avg_length_cm", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average length of the observed taxa (in cm)."
+  ),
+  list(
+    name = "min_length_cm", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Minimum length of the observed taxa (in cm)."
+  ),
+  list(
+    name = "max_length_cm", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Maximum length of the observed taxa (in cm)."
+  ),
+  list(
+    name = "avg_abundance", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average number of individuals of the observed taxa (individuals per square meter)."
+  ),
+  list(
+    name = "std_abundance", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of the average abundance."
+  ),
+  list(
+    name = "avg_biomass", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Average biomass of the observed taxa (in grams per square meter)."
+  ),
+  list(
+    name = "std_biomass", 
+    type = "FLOAT", 
+    mode = "NULLABLE", 
+    description = "Standard deviation of the average biomass."
+  ),
+  list(
+    name = "n_stations", 
+    type = "INTEGER", 
+    mode = "REQUIRED", 
+    description = "Number of stations sampled in each location."
+  ),
+  list(
+    name = "freq_occ", 
+    type = "FLOAT", 
+    mode = "REQUIRED", 
+    description = "Frequency of occurrence of the taxa across stations."
+  )
+)
+
+# Create the taxa_summary table in BigQuery
+bq_table_create(
+  bq_table(project_id, "fish_surveys", "summary_by_taxa"),
+  fields = summary_by_taxa_schema
+)
+```
