@@ -1,0 +1,285 @@
+---
+title: "Fish Dataset"
+date: today
+format: 
+  html:
+    theme: minty
+    self-contained: true
+    code-fold: true
+    toc: true 
+    toc-depth: 4
+    toc-location: right
+---
+
+
+```{r setup, message = F, warning = F, fig.width = 10, fig.height = 10, echo = F}
+options(scipen = 999)
+
+library(PristineSeasR)
+library(paletteer)
+library(sf)
+library(bigrquery)
+library(gt)
+library(tibble)
+library(tidyverse)
+
+knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
+
+ps_paths <- PristineSeasR::get_sci_drive_paths()
+
+prj_path <- file.path(ps_paths$projects, "prj-legacy-db")
+
+ps_data_path <- ps_paths$datasets
+  
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+project_id <- "pristine-seas"
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), 
+                                project = project_id)
+```
+
+## Overview
+
+The `fish` dataset contains visual survey data and associated metadata for reef-associated fish communities recorded during Pristine Seas expeditions. These data support ecological assessments of biomass, species richness, and community structure across sites, regions, and management zones.
+
+All observations were collected using standardized SCUBA-based belt transects, following protocols for underwater visual surveys (UVS). At each station, trained observers recorded species identity, estimated total length, and abundance for all fishes encountered (see Methods for details).
+
+The dataset follows the Pristine Seas data model: **Site → Station → Observation → Summary**, and is organized into the following related tables:
+
+- `fish.stations` — One row per fish survey at a unique depth stratum per site. Includes diver, depth, number of transects, and effort metadata.
+- `fish.observations` — One row per taxon observed at a station, including size, count, and calculated biomass.
+- `fish.biomass_by_taxa` — A derived table with biomass estimates and ecological classifications (e.g., trophic group) aggregated by taxon and station.
+
+```{r}
+# Create fish dataset
+bq_dataset_create(bq_dataset("pristine-seas", "fish"),
+                  description = "SCUBA-based underwater visual survey (UVS) data for reef-associated fish communities collected during Pristine Seas expeditions. Includes metadata for each station, species-level observations, and derived biomass summaries")
+```
+
+## Structure
+
+Each fish record is linked to its corresponding site and station using `ps_site_id` and `ps_station_id`. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.
+
+  - **Site** — Location and environmental metadata (`uvs_sites`)
+  - **Station** — One fish survey at a site and depth (`fish.stations`)
+  - **Observation** — Fish records per transect (`fish.observations`)
+  - **Summary** — Aggregated biomass and community metrics (`fish.biomass_by_taxa`)
+
+## Table: `fish.stations`
+
+This table contains one row per SCUBA-based fish survey conducted at a unique depth stratum within a site. Each row includes dive metadata, survey effort (e.g., number of transects, area surveyed), and optional ecological summaries such as species richness, abundance, and biomass (@tbl-fish-stations-schema).
+
+This table contains one row per SCUBA-based fish survey conducted at a unique depth stratum within a site. Each row includes dive metadata, survey effort (e.g., number of transects, area surveyed), and optional ecological summaries such as species richness, abundance, and biomass.
+
+Stations are linked to the `uvs_sites` table via `ps_site_id`. The `ps_station_id` is constructed by appending the rounded depth (in meters) to the `ps_site_id`, followed by `"m"`.
+
+**Example:**
+
+- `ps_site_id`: *CHL_2024_uvs_001*  
+- `depth_m`: *18.2*  
+- `ps_station_id`: *CHL_2024_uvs_001_18m*
+
+This station ID format is consistent across all underwater visual survey (UVS) methods in the Pristine Seas database, including fish, benthic cover, and eDNA surveys.
+
+::: {.callout-note title="Standard depth strata for UVS methods"}
+- **Super shallow**: ≤ 5 m  
+- **Shallow**: 5–15 m  
+- **Deep**: > 15 m
+:::
+
+```{r eval = T, include = T}
+#| label: tbl-fish-stations-schema
+#| tbl-cap: "`fish.stations` Table Schema"
+#| 
+fish_stations_fields <- tribble(
+  ~Field,            ~Type,     ~Required,  ~Description,
+  "exp_id",          "STRING",  TRUE,       "Expedition ID (e.g., CHL_2024)",
+  "ps_site_id",      "STRING",  TRUE,       "Pristine Seas site ID shared by fish, benthic, and eDNA surveys",
+  "method",          "STRING",  TRUE,       "Method name; always 'fish' for this table",
+  "ps_station_id",   "STRING",  TRUE,       "Unique station ID (e.g., CHL_2024_uvs_001_18m)",
+  "diver",           "STRING",  TRUE,       "Initials or name of the primary diver",
+  "depth_m",         "FLOAT",   TRUE,       "Depth of the station in meters",
+  "depth_strata",    "STRING",  TRUE,       "Depth stratum: super shallow (≤5 m), shallow (5–15 m), or deep (>15 m)",
+  "n_transects",     "INTEGER", TRUE,       "Number of transects surveyed at the station",
+  "area_m2",         "FLOAT",   TRUE,       "Total area surveyed (in m²)",
+  "date",            "DATE",    TRUE,       "Date of the fish survey",
+  "time",            "TIME",    TRUE,       "Start time of the survey (local time)",
+  "location",        "STRING",  TRUE,       "Name of the broader sampling area (e.g., reef or island)",
+  "sublocation",     "STRING",  FALSE,      "Finer-scale site name within the location",
+  "habitat",         "STRING",  TRUE,       "Habitat type: fore reef, back reef, etc.",
+  "exposure",        "STRING",  TRUE,       "Exposure classification: windward, leeward, or lagoon",
+  "notes",           "STRING",  FALSE,      "Optional comments or observations",
+  "n_species",       "INTEGER", FALSE,      "Number of species observed (optional summary)",
+  "abundance",       "INTEGER", FALSE,      "Estimated fish abundance (individuals per m², optional summary)",
+  "biomass",         "FLOAT",   FALSE,      "Estimated total fish biomass (g/m², optional summary)")
+
+fish_stations_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r}
+fish_schema <- fish_stations_fields |> 
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create( bq_table("pristine-seas", "fish", "stations"),
+                 fields = fish_schema)
+```
+
+## Table: `fish.observations`
+
+This table contains one row per fish observation recorded on a single transect. Observations are organized by species, size, and count, and represent raw field data collected by trained divers using SCUBA-based underwater visual surveys (UVS). Each record includes the station and transect ID, species identity (`taxon_id`), estimated total length (`length_cm`), number of individuals observed (`count`), and standardized metrics for density and biomass (@tbl-fish-obs-schema).
+
+Each observation is linked to its corresponding station via `ps_station_id`, and to species-level metadata via `taxon_id`. All records from the same transect (A–C) within a station share the same `ps_station_id` and `transect` label.
+
+The fields `abundance` and `biomass` are calculated post hoc using size-specific transect areas and taxon-specific length–weight parameters from the species reference table.
+
+::: {.callout-note title="Transect dimensions based on fish size"}
+- Fish **≥ 20 cm** are counted on the outward swim within a 25 m × 4 m belt (100 m²)  
+- Fish **< 20 cm** are counted on the return swim within a 25 m × 2 m belt (50 m²)
+*Note: In rare cases where transects deviate from the standard 25 m length, actual length should be recorded and used for calculating abundance and biomass.*
+:::
+
+> ⚠️ Each row represents a unique **species–size–transect** combination. Multiple size classes of the same species within a transect are recorded as separate rows.
+
+```{r eval = T, include = T}
+#| label: tbl-fish-obs-schema
+#| tbl-cap: "`fish.observations` Table Schema"
+
+fish_observations_fields <- tribble(
+  ~Field,           ~Type,     ~Required,  ~Description,
+  "obs_id",         "STRING",  TRUE,       "Unique identifier for each observation (e.g., CHL_2024_uvs_001_18m_A_0001)",
+  "ps_station_id",  "STRING",  TRUE,       "Unique ID of the station where the transect was conducted",
+  "transect",       "STRING",  TRUE,       "Transect label within the station (e.g., A, B, C)",
+  "diver",          "STRING",  TRUE,       "Initials or name of the diver who recorded the observation",
+  "taxon_id",       "STRING",  TRUE,       "Unique identifier for the observed taxon (linked to species list)",
+  "scientific_name","STRING",  TRUE,       "Scientific name of the observed species",
+  "length_cm",      "FLOAT",   TRUE,       "Estimated total length (cm) of the individual or midpoint of size class",
+  "count",          "INTEGER", TRUE,       "Number of individuals observed at this length",
+  "abundance",      "FLOAT",   FALSE,      "Estimated fish abundance (individuals per m²), standardized to transect area",
+  "biomass",        "FLOAT",   FALSE,      "Estimated fish biomass (g/m²), standardized to transect area",
+  "notes",          "STRING",  FALSE,      "Optional comments, behavioral notes, or uncertainty flags"
+)
+
+fish_observations_fields |>
+  gt::gt() |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r}
+fish_obs_schema <- fish_observations_fields |> 
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create( bq_table("pristine-seas", "fish", "observations"),
+                 fields = fish_obs_schema)
+```
+
+## Table: `biomass_by_taxa`
+
+This table contains summarized fish biomass and abundance data by taxon and station, derived from raw observations. Each row represents the total estimated biomass (in grams per m²) and abundance (individuals per m²) for a given species or taxon recorded at a station.
+
+Taxonomic and ecological fields (e.g., family, trophic group, functional group) are joined from the species reference list to support aggregation and visualization. This is the primary analysis-ready table for generating figures, summaries, and community structure plots.
+
+> ⚠️ All biomass and abundance values are standardized to the appropriate transect area based on fish size, following UVS survey protocols.
+
+```{r eval = T, include = T}
+#| label: tbl-fish-biomass-schema
+#| tbl-cap: "`fish.biomass_by_taxa` Table Schema"
+
+fish_biomass_by_taxa_fields <- tribble(
+  ~Field,            ~Type,     ~Required,  ~Description,
+  "ps_station_id",   "STRING",  TRUE,       "Unique Pristine Seas station ID (e.g., CHL_2024_uvs_001_18m)",
+  "exp_id",          "STRING",  TRUE,       "Expedition ID associated with the station (e.g., CHL_2024)",
+  "location",        "STRING",  TRUE,       "Broader sampling area (e.g., reef or island)",
+  "habitat",         "STRING",  TRUE,       "Habitat type: fore reef, back reef, etc.",
+  "exposure",        "STRING",  TRUE,       "Exposure classification: windward, leeward, or lagoon",
+  "depth_m",         "FLOAT",   TRUE,       "Depth of the station in meters",
+  "depth_strata",    "STRING",  TRUE,       "Depth stratum: super shallow, shallow, or deep",
+  "n_transects",     "INTEGER", TRUE,       "Number of transects surveyed at the station",
+
+  "taxon_id",        "STRING",  TRUE,       "Unique identifier for the observed taxon (linked to species list)",
+  "scientific_name", "STRING",  TRUE,       "Scientific name of the taxon",
+  "family",          "STRING",  FALSE,      "Taxonomic family (from species list)",
+  "trophic_group",   "STRING",  FALSE,      "Ecological trophic group (e.g., herbivore, piscivore)",
+  "functional_group","STRING",  FALSE,      "Functional classification (e.g., browser, planktivore)",
+
+  "abundance",       "FLOAT",   TRUE,       "Estimated abundance (individuals per m²) of the taxon at the station",
+  "biomass",         "FLOAT",   TRUE,       "Estimated biomass (grams per m²) of the taxon at the station",
+  "n_obs",           "INTEGER", FALSE,      "Number of observations (rows in `fish.observations`) contributing to this summary"
+)
+
+fish_biomass_by_taxa_fields |>
+  gt::gt() |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r}
+fish_biomass_schema <- fish_biomass_by_taxa_fields |> 
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create( bq_table("pristine-seas", "fish", "biomass_by_taxa"),
+                 fields = fish_biomass_schema)
+```
+
+## QA/QC Procedures
+
+This section describes the quality assurance and quality control (QA/QC) steps applied to the fish observation data:
+
+  - **Species validation**: All `taxon_id` values are validated against the curated species list. Unknown or ambiguous species IDs are flagged for manual review.
+  - **Length outlier detection**: Observations with `length_cm` outside of species-specific max/min values are flagged for review. This ensures that measurements are biologically realistic.
+  - **Effort checks**: Observation totals (`count`, `abundance`, `biomass`) are validated against the number of transects (`n_transects`) and expected effort per diver.
+  - **Range enforcement**: Fields like `count`, `length_cm`, `abundance`, and `biomass` are required to be non-negative and checked for reasonable ranges.
+  - **Duplication check**:  Duplicate `obs_id` values and repeated species–length–transect combinations are flagged and removed.
+  - **Cross-table validation**: Ensure that `ps_station_id` exists in `fish.stations` and matches the corresponding metadata (e.g., habitat, exposure).
+  - **Data completeness**: Missing critical fields (e.g., `taxon_id`, `length_cm`) are flagged for review.
+  - **Data summary checks**: Post-processing checks ensure derived metrics like `biomass` and `abundance` fall within ecologically plausible ranges. Any unexpected values are flagged for further review.
+  - **QA/QC flags**: Each observation is tagged with a `qaqc_flag` to track its quality status: `Pass`, `Warning`, or `Fail`.
+
+## Data Access
+
+- How to join with `uvs_sites`, `species_lists`, and other tables
+- Tips for filtering by region, depth, or family
+- Folded code examples (e.g., summarize richness or biomass)

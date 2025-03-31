@@ -128,5 +128,95 @@
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Sites</span>"
     ]
+  },
+  {
+    "objectID": "03_fish_dataset.html",
+    "href": "03_fish_dataset.html",
+    "title": "4  Fish Dataset",
+    "section": "",
+    "text": "Overview\nThe fish dataset contains visual survey data and associated metadata for reef-associated fish communities recorded during Pristine Seas expeditions. These data support ecological assessments of biomass, species richness, and community structure across sites, regions, and management zones.\nAll observations were collected using standardized SCUBA-based belt transects, following protocols for underwater visual surveys (UVS). At each station, trained observers recorded species identity, estimated total length, and abundance for all fishes encountered (see Methods for details).\nThe dataset follows the Pristine Seas data model: Site → Station → Observation → Summary, and is organized into the following related tables:",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#overview",
+    "href": "03_fish_dataset.html#overview",
+    "title": "4  Fish Dataset",
+    "section": "",
+    "text": "fish.stations — One row per fish survey at a unique depth stratum per site. Includes diver, depth, number of transects, and effort metadata.\nfish.observations — One row per taxon observed at a station, including size, count, and calculated biomass.\nfish.biomass_by_taxa — A derived table with biomass estimates and ecological classifications (e.g., trophic group) aggregated by taxon and station.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#dataset-structure",
+    "href": "03_fish_dataset.html#dataset-structure",
+    "title": "4  Fish Dataset",
+    "section": "Dataset Structure",
+    "text": "Dataset Structure\nEach fish record is linked to its corresponding site and station using ps_site_id and ps_station_id. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.\n\nSite — Location and environmental metadata (uvs_sites)\nStation — One fish survey at a site and depth (fish.stations)\nObservation — Fish records per transect (fish.observations)\nSummary — Aggregated biomass and community metrics (fish.biomass_by_taxa)",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#table-fish.stations",
+    "href": "03_fish_dataset.html#table-fish.stations",
+    "title": "4  Fish Dataset",
+    "section": "Table: fish.stations",
+    "text": "Table: fish.stations\nThis table contains one row per SCUBA-based fish survey conducted at a unique depth stratum within a site. Each row includes dive metadata, survey effort (e.g., number of transects, area surveyed), and optional ecological summaries such as species richness, abundance, and biomass (Table 4.1).\nThis table contains one row per SCUBA-based fish survey conducted at a unique depth stratum within a site. Each row includes dive metadata, survey effort (e.g., number of transects, area surveyed), and optional ecological summaries such as species richness, abundance, and biomass.\nStations are linked to the uvs_sites table via ps_site_id. The ps_station_id is constructed by appending the rounded depth (in meters) to the ps_site_id, followed by \"m\".\nExample:\n\nps_site_id: CHL_2024_uvs_001\n\ndepth_m: 18.2\n\nps_station_id: CHL_2024_uvs_001_18m\n\nThis station ID format is consistent across all underwater visual survey (UVS) methods in the Pristine Seas database, including fish, benthic cover, and eDNA surveys.\n\n\n\n\n\n\nStandard depth strata for UVS methods\n\n\n\n\nSuper shallow: ≤ 5 m\n\nShallow: 5–15 m\n\nDeep: &gt; 15 m\n\n\n\n\n\n\n\nTable 4.1: fish.stations Table Schema\n\n\n\n\n\n\n\n\n\nField\nType\nRequired\nDescription\n\n\n\n\nexp_id\nSTRING\nTRUE\nExpedition ID (e.g., CHL_2024)\n\n\nps_site_id\nSTRING\nTRUE\nPristine Seas site ID shared by fish, benthic, and eDNA surveys\n\n\nmethod\nSTRING\nTRUE\nMethod name; always 'fish' for this table\n\n\nps_station_id\nSTRING\nTRUE\nUnique station ID (e.g., CHL_2024_uvs_001_18m)\n\n\ndiver\nSTRING\nTRUE\nInitials or name of the primary diver\n\n\ndepth_m\nFLOAT\nTRUE\nDepth of the station in meters\n\n\ndepth_strata\nSTRING\nTRUE\nDepth stratum: super shallow (≤5 m), shallow (5–15 m), or deep (&gt;15 m)\n\n\nn_transects\nINTEGER\nTRUE\nNumber of transects surveyed at the station\n\n\narea_m2\nFLOAT\nTRUE\nTotal area surveyed (in m²)\n\n\ndate\nDATE\nTRUE\nDate of the fish survey\n\n\ntime\nTIME\nTRUE\nStart time of the survey (local time)\n\n\nlocation\nSTRING\nTRUE\nName of the broader sampling area (e.g., reef or island)\n\n\nsublocation\nSTRING\nFALSE\nFiner-scale site name within the location\n\n\nhabitat\nSTRING\nTRUE\nHabitat type: fore reef, back reef, etc.\n\n\nexposure\nSTRING\nTRUE\nExposure classification: windward, leeward, or lagoon\n\n\nnotes\nSTRING\nFALSE\nOptional comments or observations\n\n\nn_species\nINTEGER\nFALSE\nNumber of species observed (optional summary)\n\n\nabundance\nINTEGER\nFALSE\nEstimated fish abundance (individuals per m², optional summary)\n\n\nbiomass\nFLOAT\nFALSE\nEstimated total fish biomass (g/m², optional summary)",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#table-fish.observations",
+    "href": "03_fish_dataset.html#table-fish.observations",
+    "title": "4  Fish Dataset",
+    "section": "Table: fish.observations",
+    "text": "Table: fish.observations\nThis table contains one row per fish observation recorded on a single transect. Observations are organized by species, size, and count, and represent raw field data collected by trained divers using SCUBA-based underwater visual surveys (UVS). Each record includes the station and transect ID, species identity (taxon_id), estimated total length (length_cm), number of individuals observed (count), and standardized metrics for density and biomass (Table 4.2).\nEach observation is linked to its corresponding station via ps_station_id, and to species-level metadata via taxon_id. All records from the same transect (A–C) within a station share the same ps_station_id and transect label.\nThe fields abundance and biomass are calculated post hoc using size-specific transect areas and taxon-specific length–weight parameters from the species reference table.\n\n\n\n\n\n\nTransect dimensions based on fish size\n\n\n\n\nFish ≥ 20 cm are counted on the outward swim within a 25 m × 4 m belt (100 m²)\n\nFish &lt; 20 cm are counted on the return swim within a 25 m × 2 m belt (50 m²) Note: In rare cases where transects deviate from the standard 25 m length, actual length should be recorded and used for calculating abundance and biomass.\n\n\n\n\n⚠️ Each row represents a unique species–size–transect combination. Multiple size classes of the same species within a transect are recorded as separate rows.\n\n\n\n\n\nTable 4.2: fish.observations Table Schema\n\n\n\n\n\n\n\n\n\nField\nType\nRequired\nDescription\n\n\n\n\nobs_id\nSTRING\nTRUE\nUnique identifier for each observation (e.g., CHL_2024_uvs_001_18m_A_0001)\n\n\nps_station_id\nSTRING\nTRUE\nUnique ID of the station where the transect was conducted\n\n\ntransect\nSTRING\nTRUE\nTransect label within the station (e.g., A, B, C)\n\n\ndiver\nSTRING\nTRUE\nInitials or name of the diver who recorded the observation\n\n\ntaxon_id\nSTRING\nTRUE\nUnique identifier for the observed taxon (linked to species list)\n\n\nscientific_name\nSTRING\nTRUE\nScientific name of the observed species\n\n\nlength_cm\nFLOAT\nTRUE\nEstimated total length (cm) of the individual or midpoint of size class\n\n\ncount\nINTEGER\nTRUE\nNumber of individuals observed at this length\n\n\nabundance\nFLOAT\nFALSE\nEstimated fish abundance (individuals per m²), standardized to transect area\n\n\nbiomass\nFLOAT\nFALSE\nEstimated fish biomass (g/m²), standardized to transect area\n\n\nnotes\nSTRING\nFALSE\nOptional comments, behavioral notes, or uncertainty flags",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#table-biomass_by_taxa",
+    "href": "03_fish_dataset.html#table-biomass_by_taxa",
+    "title": "4  Fish Dataset",
+    "section": "Table: biomass_by_taxa",
+    "text": "Table: biomass_by_taxa\nThis table contains summarized fish biomass and abundance data by taxon and station, derived from raw observations. Each row represents the total estimated biomass (in grams per m²) and abundance (individuals per m²) for a given species or taxon recorded at a station.\nTaxonomic and ecological fields (e.g., family, trophic group, functional group) are joined from the species reference list to support aggregation and visualization. This is the primary analysis-ready table for generating figures, summaries, and community structure plots.\n\n⚠️ All biomass and abundance values are standardized to the appropriate transect area based on fish size, following UVS survey protocols.\n\n\n\n\n\nTable 4.3: fish.biomass_by_taxa Table Schema\n\n\n\n\n\n\n\n\n\nField\nType\nRequired\nDescription\n\n\n\n\nps_station_id\nSTRING\nTRUE\nUnique Pristine Seas station ID (e.g., CHL_2024_uvs_001_18m)\n\n\nexp_id\nSTRING\nTRUE\nExpedition ID associated with the station (e.g., CHL_2024)\n\n\nlocation\nSTRING\nTRUE\nBroader sampling area (e.g., reef or island)\n\n\nhabitat\nSTRING\nTRUE\nHabitat type: fore reef, back reef, etc.\n\n\nexposure\nSTRING\nTRUE\nExposure classification: windward, leeward, or lagoon\n\n\ndepth_m\nFLOAT\nTRUE\nDepth of the station in meters\n\n\ndepth_strata\nSTRING\nTRUE\nDepth stratum: super shallow, shallow, or deep\n\n\nn_transects\nINTEGER\nTRUE\nNumber of transects surveyed at the station\n\n\ntaxon_id\nSTRING\nTRUE\nUnique identifier for the observed taxon (linked to species list)\n\n\nscientific_name\nSTRING\nTRUE\nScientific name of the taxon\n\n\nfamily\nSTRING\nFALSE\nTaxonomic family (from species list)\n\n\ntrophic_group\nSTRING\nFALSE\nEcological trophic group (e.g., herbivore, piscivore)\n\n\nfunctional_group\nSTRING\nFALSE\nFunctional classification (e.g., browser, planktivore)\n\n\nabundance\nFLOAT\nTRUE\nEstimated abundance (individuals per m²) of the taxon at the station\n\n\nbiomass\nFLOAT\nTRUE\nEstimated biomass (grams per m²) of the taxon at the station\n\n\nn_obs\nINTEGER\nFALSE\nNumber of observations (rows in `fish.observations`) contributing to this summary",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#qaqc-procedures",
+    "href": "03_fish_dataset.html#qaqc-procedures",
+    "title": "4  Fish Dataset",
+    "section": "QA/QC Procedures",
+    "text": "QA/QC Procedures\nThis section describes the quality assurance and quality control (QA/QC) steps applied to the fish observation data:\n\nSpecies validation: All taxon_id values are validated against the curated species list. Unknown or ambiguous species IDs are flagged for manual review.\nLength outlier detection: Observations with length_cm outside of species-specific max/min values are flagged for review. This ensures that measurements are biologically realistic.\nEffort checks: Observation totals (count, abundance, biomass) are validated against the number of transects (n_transects) and expected effort per diver.\nRange enforcement: Fields like count, length_cm, abundance, and biomass are required to be non-negative and checked for reasonable ranges.\nDuplication check: Duplicate obs_id values and repeated species–length–transect combinations are flagged and removed.\nCross-table validation: Ensure that ps_station_id exists in fish.stations and matches the corresponding metadata (e.g., habitat, exposure).\nData completeness: Missing critical fields (e.g., taxon_id, length_cm) are flagged for review.\nData summary checks: Post-processing checks ensure derived metrics like biomass and abundance fall within ecologically plausible ranges. Any unexpected values are flagged for further review.\nQA/QC flags: Each observation is tagged with a qaqc_flag to track its quality status: Pass, Warning, or Fail.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#data-access",
+    "href": "03_fish_dataset.html#data-access",
+    "title": "4  Fish Dataset",
+    "section": "Data Access",
+    "text": "Data Access\n\nHow to join with uvs_sites, species_lists, and other tables\nTips for filtering by region, depth, or family\nFolded code examples (e.g., summarize richness or biomass)",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
+  },
+  {
+    "objectID": "03_fish_dataset.html#structure",
+    "href": "03_fish_dataset.html#structure",
+    "title": "4  Fish Dataset",
+    "section": "Structure",
+    "text": "Structure\nEach fish record is linked to its corresponding site and station using ps_site_id and ps_station_id. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.\n\nSite — Location and environmental metadata (uvs_sites)\nStation — One fish survey at a site and depth (fish.stations)\nObservation — Fish records per transect (fish.observations)\nSummary — Aggregated biomass and community metrics (fish.biomass_by_taxa)",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
+    ]
   }
 ]

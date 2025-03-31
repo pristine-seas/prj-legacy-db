@@ -14,6 +14,7 @@ book:
     - index.qmd
     - 01_expeditions.qmd
     - 02_sites.qmd
+    - 03_fish_dataset.qmd
   sidebar:
     logo: 'ps_logo.png'
   repo-url: https://github.com/pristine-seas/prj-legacy-db
