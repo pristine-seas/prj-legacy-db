@@ -1,0 +1,548 @@
+---
+title: "Sites"
+date: today
+format: 
+  html:
+    theme: minty
+    self-contained: true
+    code-fold: true
+    toc: true 
+    toc-depth: 4
+    toc-location: right
+---
+
+```{r setup, message = F, warning = F, fig.width = 10, fig.height = 10, echo = F}
+options(scipen = 999)
+
+library(PristineSeasR)
+library(paletteer)
+library(sf)
+library(bigrquery)
+library(gt)
+library(tibble)
+library(tidyverse)
+
+knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
+
+ps_paths <- PristineSeasR::get_sci_drive_paths()
+
+prj_path <- file.path(ps_paths$projects, "prj-legacy-db")
+
+ps_data_path <- ps_paths$datasets
+  
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+project_id <- "pristine-seas"
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), 
+                                project = project_id)
+```
+
+## Overview
+
+The `sites` dataset is a core component of the Pristine Seas BigQuery database. It contains a collection of method-specific site tables that document the **what, where, when, and who** of fieldwork conducted during each scientific expedition. These tables provide a high-level summary of survey locations and sampling activity, capturing essential spatial, temporal, and logistical metadata.
+
+Site tables are not designed to store method-specific sampling events such as transects, deployments, or replicates — those are handled separately in the corresponding `method.stations` tables within each method's dataset.
+
+A **site** represents a unique point in **space and time** where one or more scientific survey methods were conducted. Each site is uniquely identified by a standardized `ps_site_id` and serves as the fundamental spatial-temporal unit across the Pristine Seas database.
+
+A **site** may contain one or more **stations**, each representing a specific sampling event. Stations may differ by:
+  - **Method** (e.g., fish BLT vs. benthic LPI conducted at the same UVS site)
+  - **Depth stratum** (e.g., submersible transects at different depths)
+  - **Replicate** (e.g., multiple pelagic BRUVS rigs deployed at a single site)
+
+This hierarchical structure allows for rich, scalable representation of spatially and methodologically diverse sampling events.
+
+## Core Site Schema
+
+All site tables in the database share a **core schema** that defines the essential spatial and temporal metadata for each sampling location (@tbl-core-site-schema). These fields represent the **what, where, when, and who** of data collection and are **required** across all site tables, regardless of method.
+
+This standardized structure enables consistent quality control, supports spatial and temporal analysis, and facilitates integration of data across methods, expeditions, and years.
+
+```{r core_schema, eval = T, include = T}
+#| label: tbl-core-site-schema
+#| tbl-cap: "Core Site Schema"
+
+core_site_fields <- c("exp_id", "leg", "survey_type", "ps_site_id", "location", "sublocation", "date", "time", "lat", "lon", "team_lead", "notes")
+
+core_site_schema <- tibble::tibble(
+  Method = "Core",
+  Field = core_site_fields,
+  Type = c("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "DATE", "TIME", "FLOAT", "FLOAT", "STRING", "STRING"),
+  Required = TRUE,
+  Description = c("Unique expedition identifier in the format `ISO3_YYYY` (e.g., `PNG_2024`).",
+                  "Cruise leg or operational phase (e.g., Leg 1, Caribbean vs. Pacific)",
+                  "Type of survey conducted. Allowed values: `uvs`, `sbruvs`, `pbruvs`, `sub`, `rov`, `dscm`, `bird`, `ysi`, 'edna'",
+                  "Unique Pristine Seas site ID in the format `ISO3_YYYY_survey_###` (e.g., `PNG_2024_uvs_001`).",
+                  "General area of the site (e.g., Gulf of Tribugá, Three Sister, Duff Islands)",
+                  "Finer-scale geographic area within the location, such as an island, atoll, bay (e.g., Ensendada de Utría, Bajo Nuevo)",
+                  "Sampling date in `YYYY-MM-DD` format.",
+                  "Local time of sampling (e.g., `14:30`). Format: 24-hour `HH:MM`",
+                  "Latitude in decimal degrees (e.g., `-0.7512`). Negative = south (WGS84)",
+                  "Longitude in decimal degrees (e.g., `-91.0812`). Negative = west (WGS84)",
+                  "Name of team lead or responsible field scientist",
+                  "Free-text notes describing the site"))
+
+core_site_schema |>
+  gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+## Method-Specific Tables
+
+While all site tables share a standardized core schema, each sampling method introduces additional fields that capture metadata unique to that method. These method-specific fields provide essential contextual detail such as depth, platform type, habitat classification, or deployment parameters.
+
+The following method-specific site tables are currently included in the `sites` dataset.
+
+### Underwater Visual Surveys
+
+Underwater Visual Survey (UVS) sites represent the core spatial unit for SCUBA-based survey methods conducted during Pristine Seas expeditions. These methods include fish belt transects (BLT), benthic line point intercept (LPI), invertebrate counts, coral recruit surveys, and others.
+
+In addition to the core site fields, the `uvs_sites` table includes two key controlled fields used to provide ecological and environmental interpretation of each site. These are: 
+
+  - **`habitat`**: 
+    - **_fore reef_**: Outer slope of a reef, typically high-energy and wave-exposed.
+    - **_back reef_**: Protected area behind the reef crest, often calmer and more sheltered.
+    - **_fringing reef_**: Reef structure that grows directly from the shoreline.
+    - **_patch reef_**: Isolated, often small reef outcrops within a lagoon or sandy area.
+    - **_reef flat_**: Shallow, flat section of a reef, often exposed at low tide.
+    - **_channel_**: Natural passage between reef structures or through atolls.
+    - **_seagrass_**: Shallow marine habitat dominated by seagrass beds.
+    - **_rocky reef_**: Hard-bottom habitat composed primarily of rock.
+    - **_other_**: Habitat that does not fit predefined categories.
+
+  - **`exposure`**: 
+    - **_windward_**: Side of the island or reef facing prevailing winds and wave energy. Typically higher energy environments with more exposure to ocean swell.
+    - **_leeward_**: Sheltered side, facing away from prevailing winds. Typically calmer, with reduced wave action.
+    - **_lagoon_**: Located within a lagoon system, protected from direct oceanic exposure. Often shallow and calm, with restricted circulation.
+    - **_other_**: Exposure type does not fit standard categories (e.g., enclosed bays).
+ 
+Additional fields include a `site_name` (often used for repeat surveys), the name of the local community (where relevant), protection status, and flags indicating which UVS sub-methods were conducted at each site (@tbl-uvs-site-schema).
+
+```{r uvs_fields, eval = T, include = T}
+#| label: tbl-uvs-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `uvs_sites` table"
+
+uvs_site_fields <- tibble::tibble(Method = "uvs",
+                                  Field = c("site_name", "habitat", "exposure", "community", 
+                                            "protected",  "blt", "lpi", "ysi", "inverts", "recruits", "e_dna", "photomosaic"),
+                                  Type = c(rep("STRING", 4),
+                                           rep("BOOLEAN", 8)),
+                                  Required = c(FALSE, TRUE, TRUE, FALSE,
+                                               FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                                  Description = c("Site name used in prior surveys or local knowledge (e.g., TNC_2000_001, Punta Esperanza)",
+                                                  "Dominant habitat type. Allowed: *fore reef*, *back reef*, *fringing reef*, *patch reef*, *reef flat*, *lagoon patch reef*, *channel*, *seagrass*, *rocky reef*, *other*",
+                                                  "Wind and wave exposure at the site. Allowed: *windward*, *leeward*, *lagoon*, *other*",
+                                                  "Nearest local community or population center to the site",
+                                                  "Whether the site is within a marine protected area (MPA) or Tambu",
+                                                  "Whether fish belt transects were done at this site",
+                                                  "Whether benthic point intercept transects were done at this site",
+                                                  "Whether YSI environmental profile was done at this site",
+                                                  "Whether invertebrate surveys were done at this site",
+                                                  "Whether coral recruit surveys were done at this site",
+                                                  "Whether eDNA samples were collected at this site",
+                                                  "Whether Photomosaic imagery was collected at this site"))
+
+uvs_site_fields |>
+  gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_uvs_sites_tbl}
+# Create dataset
+
+bq_dataset_create(bq_dataset("pristine-seas", "sites"),
+                  friendly_name = "Sites",
+                  description = "Spatial and logistical metadata for all sampling sites visited during Pristine Seas expeditions, organized by survey type. Each table captures the what, where, when, and who of fieldwork for a specific method.")
+
+# Create table
+
+uvs_schema <- bind_rows(core_site_schema, uvs_site_fields) |>
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create(bq_table("pristine-seas", "sites", "uvs_sites"),
+                fields = uvs_schema)
+```
+
+### eDNA
+
+The `edna_sites` table contains one row per environmental DNA (eDNA) sampling site. Each site represents a distinct point in space and time and serves as the primary spatial unit for eDNA fieldwork. Within a site, multiple water samples (replicates) may be collected across different depth strata, recorded in the corresponding `edna.stations` table.
+
+In addition to the **core site fields**, the `edna_sites` table includes method-specific metadata (@tbl-edna-site-schema), such as:
+
+  - **`exposure`** – Same controlled vocabulary as in `uvs_sites`  
+  - **`habitat`** – Same as `uvs_sites`, with the following additional categories:
+    - **_open water_** – Offshore or pelagic environments
+    - **_bay_** – Semi-enclosed coastal embayments
+    - **_estuary_** – Transitional area between river and marine systems
+    - **_mangrove_** – Shallow, intertidal forested coastal habitat
+
+```{r edna_fields, eval = T, include = T}
+#| label: tbl-edna-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `edna_sites` table"
+
+edna_site_fields <- tibble::tibble(Method = "edna",
+                                   Field = c("habitat", "exposure", "paired_ps_site_id", "n_stations", "n_samples", "site_photos"),
+                                   Type = c("STRING", "STRING","STRING","INTEGER", "INTEGER", "STRING"),
+                                   Required = c(TRUE, TRUE, FALSE, TRUE, TRUE, FALSE),
+                                   Description = c("Dominant habitat type. Allowed values: *fore reef*, *back reef*, *fringing reef*, *patch reef*, *reef flat*, *channel*, *seagrass*, *rocky reef*, *open water*, *bay*, *estuary*, *mangrove*, *other*.",
+                                                   "Wind and wave exposure at the site. Allowed values: *windward*, *leeward*, *lagoon*, *other*.",
+                                                   "`ps_site_id` of a paired site (e.g., a `uvs` or `pbruvs` site), if applicable",
+                                                   "Number of unique stations (i.e., depth strata) sampled at the site",
+                                                   "Total number of water samples (replicates) collected at the site",
+                                                   "path to associated site photos, if available (e.g.,  eDNA/site_photos/COL-2022-edna-001)"))
+
+edna_site_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_edna_tbl}
+# Create table
+
+edna_schema <- bind_rows(core_site_schema, edna_site_fields) |>
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create(bq_table("pristine-seas", "sites", "edna_sites"),
+                fields = edna_schema)
+```
+
+### Seabed BRUVS
+
+The `sbruvs_sites` table contains one row per seabed Baited Remote Underwater Video (sBRUV) deployment site. These sites represent individual stationary stereo-video deployments, typically conducted at depths from 10 to 70 meters.
+
+Each site corresponds to a **single BRUV deployment**, meaning that site and station are effectively one-to-one for this method.
+
+In addition to the **core site schema**, the `sbruvs_sites` table includes method-specific descriptors (@tbl-sbruvs-site-schema):
+
+- **`habitat`** – Same controlled vocabulary as `uvs_sites`, with the following additional values: ***bay***, ***estuary***, ***mangrove***, ***sand flat***
+- **`exposure`** – Same vocabulary as `uvs_sites`.
+
+Deployment-specific details such as **depth**, **rig ID**, and **camera identifiers** are stored in the associated `sbruvs.stations` table.
+
+```{r sbruvs_fields, eval = T, include = T}
+#| label: tbl-sbruvs-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `sbruvs_sites` table"
+
+sbruvs_site_fields <- tibble::tibble(Method = "sbruvs",
+                                     Field = c("habitat", "exposure"),
+                                     Type = c("STRING", "STRING"),
+                                     Required = c(TRUE, TRUE),
+                                     Description = c("Simplified habitat classification at the site. Allowed values: *fore reef*, *back reef*, *fringing reef*, *patch reef*, *reef flat*, *channel*, *seagrass*, *rocky reef*, *bay*, *estuary*, *mangrove*, *sand flat*, *other*.",
+                                                     "Wind and wave exposure at the site. Allowed values: *windward*, *leeward*, *lagoon*, *other*."))
+
+sbruvs_site_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_sbruvs_tbl}
+sbruvs_schema <- bind_rows(core_site_schema, sbruvs_site_fields) |>
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create(bq_table("pristine-seas", "sites", "sbruvs_sites"),
+                fields = sbruvs_schema)
+```
+
+### Pelagic BRUVS
+
+Pelagic Baited Remote Underwater Video (pBRUV) sites represent open-water deployments of stereo-video systems used to survey pelagic fish communities. Each **site** corresponds to a single 5-rig deployment set, with each rig treated as a separate **station**. As such, the `pbruvs_sites` table contains one row per deployment set, while rig-specific data are recorded in the corresponding `pbruvs.stations` table.
+
+In addition to the **core site schema**, the `pbruvs_sites` table summarizes deployment metadata across all five rigs in a standardized way (@tbl-pbruvs-site-schema):
+
+  - **`n_rigs`** – Number of rigs deployed (typically 5)
+  - **`drift_m`** – Mean drift distance (meters) across rigs
+  - **`drift_hrs`** – Mean soak time (hours)
+  - **`uwa_string_id`** – String (site) identifier used by the University of Western Australia
+
+Latitude and longitude represent the **mean start position** across all rigs, and time fields reflect the start time of the first rig. These values provide a spatial-temporal summary of the full deployment set.
+
+```{r pbruvs_fields, eval = T, include = T}
+#| label: tbl-pbruvs-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `pbruvs_sites` table"
+
+
+pbruvs_site_fields <- tibble(Method = "pbruvs",
+                             Field = c("n_rigs", "drift_m", "drift_hrs", "uwa_string_id"),
+                             Type = c("INTEGER", "FLOAT", "FLOAT", "STRING"),
+                             Required = c(TRUE, TRUE, TRUE, TRUE),
+                             Description = c("Number of rigs deployed at the site (typically 5)",
+                                             "Mean drift distance across all rigs, in meters (m).",
+                                             "Mean deployment duration across all rigs, in hours (h).",
+                                             "String (site) identifier used by the University of Western Australia"))
+
+pbruvs_site_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_pbruvs_tbl}
+pbruvs_schema <- bind_rows(core_site_schema, pbruvs_site_fields) |>
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create(bq_table("pristine-seas", "sites", "pbruvs_sites"),
+                fields = pbruvs_schema)
+```
+
+### Birds
+
+The `bird_sites` table contains one row per seabird survey transect. Each site represents the starting location and time of a vessel- or land-based transect during which seabird observations were recorded. Each site corresponds to a **single station**, representing the full transect.
+
+Although transects are mobile, the `ps_site_id` is anchored to the **start point** of the transect to provide consistent spatial referencing across the dataset.
+
+In addition to the **core site schema**, the `bird_sites` table includes a site-level descriptor for `habitat`, using a custom controlled vocabulary tailored to these surveys:
+
+  - **_open ocean_** – Offshore transects over deep water, far from land or coastal influence  
+  - **_coastal_** – Nearshore waters along mainland or island coastlines  
+  - **_inshore_** – Sheltered bays, estuaries, or nearshore zones with limited wave exposure  
+  - **_island_** – Terrestrial habitats on offshore islands, often with seabird nesting colonies  
+  - **_inland_** – Land-based habitats far from marine influence (e.g., wetlands, forest, grassland)  
+  - **_other_** – Rare or unique environments not captured by the categories above
+
+Transect-specific metadata — including platform type, duration, distance traveled, and species observations — are stored in the corresponding `birds.stations` and `birds.observations` tables.
+
+
+```{r birds_fields, eval = T, include = T}
+#| label: tbl-birds-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `birds_sites` table"
+
+birds_site_fields <- tibble::tibble(Method = "birds",
+                                    Field = c("habitat"),
+                                    Type = c("STRING"),
+                                    Required = c(TRUE),
+                                    Description = c("Broad classification of the survey environment. Allowed values: *open ocean*, *coastal*, *inshore*, *island*, *inland*, *other*."))
+
+birds_site_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_birds_tbl}
+birds_sites_schema <- bind_rows(core_site_schema, birds_site_fields)
+
+birds_sites_bq <- birds_sites_schema |>
+  transmute(name = Field,
+            type = Type,
+            mode = if_else(Required, "REQUIRED", "NULLABLE"),
+            description = Description) |>
+  purrr::pmap(bq_field)
+
+bq_table_create(bq_table("pristine-seas", "sites", "birds_sites"),
+                fields = birds_sites_bq)
+```
+
+### ROV
+
+Each ROV (Remotely Operated Vehicle) deployment is represented by a **single site** with one or more associated **stations**. The **site** corresponds to the full ROV dive (deployment), while each **station** represents a horizontal transect or observational segment within the dive. This structure follows the standard Pristine Seas convention: sites capture high-level spatial and temporal metadata, while stations contain transect-specific sampling and observation data.
+
+The `rov_sites` table records the core spatial and temporal metadata for each ROV deployment. Deployment start time (`time_deploy`) and coordinates (`lat_deploy`, `lon_deploy`) are used to populate the standardized core fields `time`, `lat`, and `lon`, ensuring consistency across methods.
+
+Method-specific metadata—such as recovery time and coordinates, `dive_type`, `max_depth_m`, `duration`, and `highlights`—are retained within the `rov_sites` table (@tbl-rov-site-schema).
+
+Transect-specific information, including start/end depth, time, coordinates, and observation notes, is stored in the corresponding `rov.stations` table.
+
+```{r rov_fields, eval = T, include = T}
+#| label: tbl-rov-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `rov_sites` table"
+
+rov_site_fields <-  tribble(
+  ~Field,           ~Type,    ~Required, ~Description,
+  "dive_type",      "STRING", FALSE,   "Purpose of the dive (e.g., transect, exploration, sample collection)",
+  "time_deploy",    "TIME",   TRUE,    "Time ROV left the surface",
+  "lat_deploy",     "FLOAT",  TRUE,    "Latitude at ROV deployment",
+  "lon_deploy",     "FLOAT",  TRUE,    "Longitude at ROV deployment",
+  "time_recovery",  "TIME",   FALSE,   "Time ROV returned to the surface",
+  "lat_recovery",   "FLOAT",  FALSE,   "Latitude at ROV recovery",
+  "lon_recovery",   "FLOAT",  FALSE,   "Longitude at ROV recovery",
+  "max_depth_m",    "FLOAT",  TRUE,    "Maximum depth reached during the dive",
+  "duration",       "TIME",   FALSE,   "Total duration of the dive (hh:mm:ss)",
+  "highlights",     "STRING", FALSE,   "Narrative summary or scientific highlights of the dive")|> 
+  mutate(Method = "rov")
+
+rov_site_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_rov_tbl}
+rov_sites_schema <- bind_rows(core_site_schema, rov_site_fields) |>
+  transmute(name = Field,
+            type = Type,
+            mode = if_else(Required, "REQUIRED", "NULLABLE"),
+            description = Description) |>
+  purrr::pmap(bq_field)
+
+bq_table_create(bq_table("pristine-seas", "sites", "rov_sites"),
+                fields = rov_sites_schema)
+```
+
+### Submersible
+
+Each submersible dive is represented by a **single site** with one or more associated **stations**. The **site** corresponds to the entire submersible deployment (dive), while each **station** represents a horizontal transect or visual survey segment conducted during that dive.
+
+The `sub_sites` table captures the spatial, temporal, and operational context of each dive. In addition to the standardized core fields shared across all site tables, it includes method-specific metadata relevant to submersible operations—such as the submersible name, `dive_type` (e.g., science, media, policy), `max_depth_m`, observers, pilot, and precise timestamps for key waypoints (e.g., time on bottom, surface recovery).
+
+To maintain alignment with the shared site schema:
+
+  - The **start of descent** provides the `time`, `lat`, and `lon` used in the core fields.
+  - The **primary scientific observer** (`observer_1`) is mapped to `team_lead`.
+
+Transect-specific information, such as start/end depth, time, habitat descriptions, and notes, is stored in the corresponding `sub.stations` table.
+
+```{r sub_fields, eval = T, include = T}
+#| label: tbl-sub-site-schema
+#| tbl-cap: "Additional fields to the core site fields in the `sub_sites` table"
+
+sub_site_fields <- tribble(
+  ~Field,           ~Type,    ~Required, ~Description,
+  # Sub-specific fields ----
+  "sub_name",       "STRING", TRUE,      "Name of submersible used (e.g., Argonauta or DeepSee)",
+  "dive_number",    "STRING", FALSE,     "Running sub dive number",
+  "depth_max_m",    "FLOAT",  TRUE,      "Maximum depth reached (m)",
+  "duration",       "TIME",   TRUE,      "Total dive duration (hh:mm:ss)",
+  "temp_max_depth_c","FLOAT", FALSE,     "Temperature at maximum depth (°C)",
+  "observer_1",     "STRING", FALSE,     "Primary scientific observer",
+  "observer2",      "STRING", FALSE,     "Secondary observer (if any)",
+  "pilot",          "STRING", FALSE,     "Submersible pilot",
+  "dive_type",      "STRING", FALSE,     "Type of dive. Allowed values: science, media, policy, training",
+  "collection",     "BOOLEAN", FALSE,    "Whether any biological collection occurred",
+  "transect",       "BOOLEAN", FALSE,    "Whether transects were conducted",
+  "edna",           "BOOLEAN", FALSE,    "Whether eDNA samples were collected",
+
+  # Dive waypoints ----
+  "time_descent",     "TIME",  TRUE,     "Time when sub began descent",
+  "lat_descent",      "FLOAT", TRUE,     "Latitude at start of descent",
+  "lon_descent",      "FLOAT", TRUE,     "Longitude at start of descent",
+  "time_on_bottom",   "TIME",  FALSE,    "Time of first bottom contact",
+  "lat_on_bottom",    "FLOAT", FALSE,    "Latitude at bottom contact",
+  "lon_on_bottom",    "FLOAT", FALSE,    "Longitude at bottom contact",
+  "time_off_bottom",  "TIME",  FALSE,    "Time when sub left the bottom",
+  "lat_off_bottom",   "FLOAT", FALSE,    "Latitude at lift-off",
+  "lon_off_bottom",   "FLOAT", FALSE,    "Longitude at lift-off",
+  "time_surface",     "TIME",  FALSE,    "Time when sub surfaced",
+  "lat_surface",      "FLOAT", FALSE,    "Latitude at surface recovery",
+  "lon_surface",      "FLOAT", FALSE,    "Longitude at surface recovery") |> 
+  mutate(Method = "Submersible")
+
+sub_site_fields |>
+  gt::gt(groupname_col = "Method") |> 
+  tab_options(row_group.as_column = T) |> 
+  tab_stubhead(label = "Table") |> 
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+```{r create_sub_tbl}
+sub_sites_schema <- bind_rows(core_site_schema, sub_site_fields)
+
+sub_sites_bq <- sub_sites_schema |>
+  transmute(name = Field,
+            type = Type,
+            mode = if_else(Required, "REQUIRED", "NULLABLE"),
+            description = Description) |>
+  purrr::pmap(bq_field)
+
+bq_table_create(bq_table("pristine-seas", "sites", "sub_sites"),
+                fields = sub_sites_bq)
+```
+
+### Deep-Sea Cameras
+
+Each deep-sea camera deployment is represented by a **single site–station pair**. In line with the Pristine Seas schema, the **site** captures the spatial and contextual metadata of the deployment, while the **station** represents the full observational unit — including technical specifications, environmental conditions, and recording parameters.
+
+The `dscm_sites` table records the **core spatial and temporal metadata** for each deployment. Deployment time (`time_deploy`) and coordinates (`lat_deploy`, `lon_deploy`) populate the standard core fields `time`, `lat`, and `lon`, following conventions used across all methods.
+
+Deployment-specific details — such as `max_depth`, bottom temperature, ambient water temperature, recovery time and position, and recording duration — are stored in the corresponding `dscm.stations` table.
+
+```{r create_dscm_tbl}
+dscm_sites_schema <- core_site_schema |>
+  transmute(name = Field,
+            type = Type,
+            mode = if_else(Required, "REQUIRED", "NULLABLE"),
+            description = Description) |>
+  purrr::pmap(bq_field)
+
+bq_table_create(bq_table("pristine-seas", "sites", "dscm_sites"),
+                fields = dscm_sites_schema)
+```

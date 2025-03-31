@@ -1,0 +1,28 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "Pristine Seas Science Database"
+  author: 
+    - name: "Juan S. Mayorga-Henao"
+    - email: marine.data.science@ngs.org
+    - affiliation: "National Geographic Society, Pristine Seas"
+    - degrees: MsSc
+  date: last-modified
+  chapters:
+    - index.qmd
+    - 01_expeditions.qmd
+    - 02_sites.qmd
+  sidebar:
+    logo: 'ps_logo.png'
+  repo-url: https://github.com/pristine-seas/prj-legacy-db
+
+format:
+  html:
+    toc: true
+    theme: lux  # Customize as needed
+    fig-cap-location: bottom  # Places figure captions below figures
+    number-depth: 1
+    number-equations: true
+    number-sections: true

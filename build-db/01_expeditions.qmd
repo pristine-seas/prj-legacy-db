@@ -1,0 +1,176 @@
+---
+title: "Expeditions"
+date: today
+format: 
+  html:
+    theme: minty
+    self-contained: true
+    code-fold: true
+    toc: true 
+    toc-depth: 4
+    toc-location: right
+---
+
+```{r setup, message = F, warning = F, fig.width = 10, fig.height = 10, echo = F}
+options(scipen = 999)
+
+library(PristineSeasR)
+library(paletteer)
+library(sf)
+library(bigrquery)
+library(gt)
+library(tibble)
+library(tidyverse)
+library(janitor)
+
+knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
+
+ps_paths <- PristineSeasR::get_sci_drive_paths()
+
+prj_path <- file.path(ps_paths$projects, "prj-legacy-db")
+
+ps_data_path <- ps_paths$datasets
+  
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+project_id <- "pristine-seas"
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), 
+                                project = project_id)
+```
+
+## Expeditions dataset
+
+The `expeditions` dataset provides the foundation for organizing all field data in the Pristine Seas Database. Each expedition represents a discrete scientific campaign, typically focused on a specific country or region and spanning several weeks to months. Expeditions may consist of one or more legs and serve as the top-level organizing unit for all site and station identifiers.
+
+This dataset provides the geographic, temporal, and logistical context needed to interpret all downstream ecological data.
+
+## Table: `expeditions.metadata`
+
+The `expeditions.metadata` table includes one row per expedition and contains key descriptive and logistical metadata. This includes details such as the country visited, start and end dates, partner organizations, research vessel, and expedition leadership.
+
+Each expedition is assigned a unique `expedition_id` using the format: `ISO3CODE_year` (e.g., `CHL_2024`). This identifier is used consistently across all related site and station IDs (e.g., `COL_2024_uvs_001_10m`), enabling traceability and structured joins across the database.
+
+```{r, eval = T, include = T}
+expeditions_fields <- tribble(
+  ~Field,         ~Type,    ~Required,  ~Description,
+  "exp_num",      "INTEGER", TRUE,      "Sequential number assigned to each Pristine Seas expedition",
+  "exp_id",       "STRING",  TRUE,      "Unique ID combining ISO3 country code and year (e.g., CHL_2024)",
+  "exp_name",     "STRING",  TRUE,      "Name of the expedition",
+  "country",      "STRING",  TRUE,      "Country where the expedition took place",
+  "start_date",   "DATE",    TRUE,      "Start date of the expedition",
+  "end_date",     "DATE",    TRUE,      "End date of the expedition",
+  "exp_leader",   "STRING",  TRUE,      "Name of the expedition leader",
+  "science_lead", "STRING",  TRUE,      "Name of the lead scientist",
+  "ship_name",    "STRING",  FALSE,      "Name of the vessel used",
+  "ship_ais",     "NUMERIC", FALSE,      "Name of the vessel used",
+  "ship_track",   "STRING",  FALSE,     "WKT LINESTRING representing the ship's route",
+  "partners",     "STRING",  FALSE,      "Partner organizations involved in the expedition",
+  "description",  "STRING",  FALSE,     "Optional description of the expedition")
+
+expeditions_fields |>
+  gt() |>
+  cols_label(Field = md("**Field**"),
+             Type = md("**Type**"),
+             Required = md("**Required**"),
+             Description = md("**Description**")) |>
+  cols_width(Field ~ px(200),
+             Type ~ px(100),
+             Required ~ px(80),
+             Description ~ px(500)) |>
+  data_color(columns = vars(Field),
+             colors = scales::col_factor(palette = c("#f6f6f6"), domain = NULL) ) |>
+  tab_options(table.font.size = px(13),
+              table.width = pct(100)) |> 
+  fmt_auto() |> 
+  fmt_markdown(columns = everything()) 
+```
+
+```{r create}
+# Create dataset
+
+bq_dataset_create(bq_dataset(project_id, "expeditions"),
+                  description = "Reference dataset containing metadata for all Pristine Seas expeditions, including dates, location, ship, leadership, and partner organizations")
+
+# Define table schema
+exp_schema <- expeditions_fields |>
+  mutate(mode = ifelse(Required, "REQUIRED", "NULLABLE")) |>
+  transmute(name = Field,
+            type = Type,
+            mode = mode,
+            description = Description) |>
+  pmap(function(name, type, mode, description) {
+    list(name = name, type = type, mode = mode, description = description)
+  })
+
+bq_table_create(bq_table(project_id, "expeditions", "metadata"),
+                fields = exp_schema)
+```
+
+```{r load_data}
+exp_info_url <- "https://docs.google.com/spreadsheets/d/1YVjkTWcxB1UseknmGvGmayeKP2fH_9UIbubksmkSGMU/edit?gid=0#gid=0"
+
+expeditions_data <- googlesheets4::read_sheet(exp_info_url)
+
+expeditions_clean <- expeditions_data |> 
+  clean_names() |> 
+  separate(date, into = c("start_date", "end_date"), sep = " - ") |> 
+  rename(exp_num = expedition_number,
+         exp_id = expedition_id,
+         exp_name = expedition_name,
+         exp_leader = expedition_leader) |> 
+  mutate(start_date = ymd(start_date),  # converts to proper Date format
+         end_date = ymd(end_date),
+         ship_ais = NA_integer_,
+         description = NA_character_,
+         ship_track = NA_character_) 
+
+bq_table_upload(bq_table("pristine-seas", "expeditions", "metadata"),
+                values = expeditions_clean,
+                create_disposition = "CREATE_NEVER",
+                write_disposition = "WRITE_APPEND")
+```
+
+### Use Cases
+
+The `expeditions.metadata` table is used to:
+
+- Filter datasets by expedition for regional analyses
+- Join logistical metadata (e.g., dates, vessel, partners) with ecological data
+- Support dashboards and reports grouped by expedition
+- Track contributions and partnerships over time
+
+This table acts as a bridge between field operations and ecological data products.
+
+::: {.panel-tabset}
+
+#### Expeditions to date {.panel}
+```{r eval = T, include = T, echo = T}
+# Establish connection to Database
+
+bigrquery::bq_auth(email = "marine.data.science@ngs.org")
+
+project_id <- "pristine-seas"
+
+bq_connection <- DBI::dbConnect(bigrquery::bigquery(), 
+                                project = project_id)
+
+# Query the number of expeditions per year from the expeditions.metadata table
+
+exp_per_year <- tbl(bq_connection, "expeditions.metadata") |> 
+  mutate(year = year(start_date) )|> 
+  count(year, name = "n_expeditions") |>
+  collect()
+```
+
+```{r  eval = T, include = T}
+ggplot(exp_per_year, aes(x = year, y = n_expeditions)) +
+  geom_col() +
+  labs(title = "Number of Pristine Seas Expeditions per Year",
+       x = "",
+       y = "Number of Expeditions") +
+  theme_minimal()
+```
+
+:::
+

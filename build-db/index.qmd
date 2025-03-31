@@ -1,0 +1,194 @@
+---
+title: "Overview"
+date: today
+format: 
+  html:
+    theme: minty
+    self-contained: true
+    code-fold: true
+    toc: true 
+    toc-depth: 4
+    toc-location: right
+---
+
+## Introduction
+
+The **Pristine Seas Science Database** is a comprehensive scientific repository designed to store and manage data collected from a global series of scientific expeditions aimed at studying and conserving marine ecosystems. This database facilitates the exploration, analysis, and sharing of data across multiple years, locations, and scientific methods. The ultimate goal is to support conservation efforts by providing robust, high-quality data to researchers, conservationists, and policymakers.
+
+The primary objectives of the Pristine Seas Database are to:
+
+- **Facilitate research**: By providing comprehensive and standardized data, the database supports a wide range of scientific research on marine ecosystems.
+- **Enhance conservation efforts**: Detailed and accurate data help conservationists develop effective strategies to protect marine environments.
+- **Promote collaboration**: The database enables collaboration between researchers, conservationists, and policymakers by providing a shared repository of valuable data.
+- **Ensure scalability**: Designed to be modular and scalable, the database can easily incorporate new data from future expeditions without major restructuring.
+
+## Structure
+
+The Pristine Seas Database is hosted in **Google BigQuery** under the project name `pristine-seas`. It is organized into multiple **modular datasets** based on data type and research method. This structure supports scalability and flexibility, allowing new data to be integrated without major restructuring.
+
+### Core Datasets
+
+The main components of the database include:
+
+- **`expeditions`** – Metadata about each expedition, including country, dates, team leads, partners, and logistics.
+- **`sites`** – Spatial and temporal metadata for each sampling location. Each method has its own site table.
+- **Method datasets** – Structured by method (e.g., `fish`, `lpi`, `sub`, `edna`, `birds`). Each contains raw observations, station metadata, and summary tables.
+- **`taxonomy`** – Reference lists of taxa by method and region.
+- **`lookup`** – Tables for controlled vocabularies, contributor names, and other reference information.
+
+Each dataset is documented in its own chapter.
+
+### Directory Structure
+
+The following schematic shows how data are organized within the BigQuery project:
+
+pristine-seas
+├── expeditions
+│   └── metadata
+├── sites
+│   ├── uvs_sites
+│   ├── pbruvs_sites
+│   ├── sbruvs_sites
+│   ├── sub_sites
+│   ├── rov_sites
+│   ├── dscm_sites
+│   ├── edna_sites
+│   ├── bird_sites
+│   └── ysi_sites
+├── fish
+│   ├── stations
+│   ├── observations
+│   └── biomass_by_taxa
+├── lpi
+│   ├── stations
+│   ├── counts
+│   └── cover_by_taxa
+├── edna
+│   ├── stations
+│   ├── samples
+│   └── MARKER_sequences_by_taxa_by_station
+├── species_lists
+├── lookup
+│   ├── contributors
+│   └── vocabularies
+
+## Data Model
+
+Most method datasets in the database follow a standardized four-tier structure:
+
+- **Sites**: Represent the *where, when, and who* of a sampling event. Each method has its own `sites` table that captures location, date, and team metadata, along with method-specific fields (e.g., habitat type, sub dive details).
+
+- **Stations**: Represent the core sampling unit within a site. A site may have one or more stations depending on the method. For example:
+  - Underwater visual surveys: different depth strata × method (e.g., LPI, BLT)
+  - Submersible dives: horizontal transects at different depths.
+  - Pelagic BRUVS: each camera rig in a five-rig set.
+
+- **Observations**: Contain QA/QC’d and minimally processed data recorded at each station — for example, fish counts by species or LPI substrate counts.
+
+- **Summaries**: Include cleaned, aggregated, or derived data products often used in analysis or visualization. Examples include: `biomass_by_taxa` (fish), `cover_by_taxa` (LPI), or `sequences_by_taxa` (eDNA)
+
+This four-tier structure helps organize data from field collection to final analysis in a way that is modular, scalable, and aligned with FAIR data principles.
+
+## Reference Tables
+
+In addition to raw and summary data, the Pristine Seas Database includes (or will include) a set of shared reference tables to support data standardization and integration across methods.
+
+- **Taxonomy dataset** (planned): A centralized reference for taxonomic names across all methods. This dataset will include:
+  - A master species list with scientific and common names
+  - Valid names and synonyms (to support QA/QC and merging)
+  - Cross-links to marker gene names (for eDNA)
+  - Higher-level taxonomy (family, order, class, etc.)
+
+  This taxonomy reference will support harmonized analyses across methods and simplify joins between observation and species-level tables.
+
+- **Contributors table** (planned): A lookup table for team members, observers, and leads involved in each expedition. This will support standardized contributor names and roles across datasets.
+
+- **Controlled vocabularies** (planned): A lookup table for categorical fields used across site and station tables, including:
+  - Habitat types (e.g., fore reef, patch reef)
+  - Exposure categories (e.g., windward, leeward)
+  - Dive types, bottom types, and other method-specific classifications
+
+These reference tables will live in a dedicated lookup or taxonomy dataset and be maintained as the database evolves.
+
+## Naming conventions
+
+The Pristine Seas Database uses standardized naming conventions to ensure clarity, consistency, and traceability across expeditions, methods, and sampling units.
+
+- **Expedition ID (`exp_id`)**  
+  Format: `ISO3CODE_year`  
+  Examples:  
+  - `COL_2024` – Colombia 2024  
+  - `FJI_2025` – Fiji 2025  
+
+- **Site ID (`ps_site_id`)**  
+  Format: `exp_id_method_###`  
+  This uniquely identifies each sampling site within a given expedition and method.  
+  Examples:  
+  - `COL_2024_uvs_001` – First underwater visual survey site in Colombia 2024  
+  - `FJI_2025_sbruvs_004` – Fourth seabed BRUVs site in Fiji 2025  
+  
+- **Station ID (`ps_station_id`)**  
+  Each station is a sampling unit within a site. The format varies slightly by method:
+
+  - **Underwater visual surveys (UVS)**  
+    Format: `ps_site_id_depthm`  
+    Example: `COL_2024_uvs_001_10m`  
+    Stations at the same site and depth may be used for multiple methods (e.g., fish, LPI, BLT). The specific method is recorded in a separate `method` column.
+
+  - **Pelagic BRUVs**  
+    Format: `ps_site_id_rig`  
+    Example: `CHL_2024_pbruvs_002_r101` – Rig 101 at site 002
+
+  - **Submersible transects**  
+    Format: `ps_site_id_transectdepth`  
+    Example: `FJI_2025_sub_001_250m` – 250 m transect during sub dive 001
+
+  - **Sub-collected eDNA samples**  
+    Format: `exp_id_sedna_site_depthm_r#`  
+    Example: `FJI_2025_sedna_001_300m_r1` – First replicate at 300 m from submersible site 001
+    
+Station-level tables include a separate method column to differentiate data types collected at the same station.
+    
+### Style Guide
+
+To ensure consistency and clarity across all tables and code, the Pristine Seas Database follows these style conventions:
+
+- All field and table names use `snake_case`
+- No spaces are used in field or file names
+- All names are lowercase unless scientific convention requires capitalization.
+- Field names are descriptive but concise, using underscores to separate words
+
+These conventions support readability and compatibility across SQL, R, and other tools.
+
+## Data Access
+
+The Pristine Seas Database is designed to support a range of users and workflows, including:
+
+  - **Internal team members**, using R or SQL for data cleaning, analysis, and reporting
+  - **Collaborating scientists**, accessing standardized data for research
+  - **Conservation partners and policymakers**, exploring summary metrics and results
+
+All data are stored in **Google BigQuery** under the project `pristine-seas`. Users can explore data through:
+  
+  - SQL queries in the BigQuery console or RStudio
+  - Pre-built Quarto documents and dashboards
+  - A companion R package (in development), which provides:
+    - Functions to query and download data from BigQuery
+    - QA/QC tools for validating raw field data
+    - Helpers to join sites, stations, and observations
+    - Prebuilt templates for summaries and reports
+
+This package will streamline common workflows, standardize data handling, and support reproducible research across the team.
+
+Datasets are modular, well-documented, and analysis-ready, making it easy for users to work with both raw and summary data.
+
+## Documentation
+
+Each dataset in the Pristine Seas Database is documented in a separate chapter of this Quarto notebook. These chapters include:
+
+- Dataset purpose and structure
+- Schema definitions and field descriptions
+- Method-specific notes and SOPs
+- Links to controlled vocabularies and reference tables
+
+This modular documentation ensures transparency, reproducibility, and ease of navigation.

@@ -1,5 +1,5 @@
 ---
-title: "Pristine Seas Scientific Expeditions Database"
+title: "Pristine Seas Scientific Database"
 date: today
 format: 
   html:
@@ -20,16 +20,15 @@ library(sf)
 library(bigrquery)
 library(gt)
 library(tidyverse)
-library(pointblank)
 
 knitr::opts_chunk$set(eval = F, warning = F, message = F, include = F, echo = F)
 
-set_ps_paths(email = "marine.data.science@ngs.org")
+ps_paths <- PristineSeasR::get_sci_drive_paths()
 
-prj_path <- file.path(ps_science_path, "projects", "prj-legacy-db")
+prj_path <- file.path(ps_paths$projects, "prj-legacy-db")
 
-ps_data_path <- file.path(ps_science_path, "datasets/")
-
+ps_data_path <- ps_paths$datasets
+  
 bigrquery::bq_auth(email = "marine.data.science@ngs.org")
 
 project_id <- "pristine-seas"
@@ -38,11 +37,11 @@ bq_connection <- DBI::dbConnect(bigrquery::bigquery(),
                                 project = project_id)
 ```
 
-The Pristine Seas Database is a comprehensive scientific repository designed to store and manage data collected from a series of global scientific expeditions aimed at studying and conserving marine ecosystems. This database facilitates the exploration, analysis, and sharing of data across multiple years, locations, and scientific methods. The ultimate goal is to support conservation efforts by providing robust, high-quality data to researchers, conservationists, and policymakers.
+The Pristine Seas Science Database is a comprehensive scientific repository designed to store and manage data collected from our series of global scientific expeditions aimed at studying and conserving marine ecosystems. This database facilitates the exploration, analysis, and sharing of data across multiple years, locations, and scientific methods. The ultimate goal is to support conservation efforts by providing robust, high-quality data to researchers, conservationists, and policymakers.
 
 # Database Objectives
 
-The primary objective of the Pristine Seas Database is to support conservation efforts by providing a robust, high-quality dataset that can grow with future expeditions. This includes:
+The primary objective of the Pristine Seas Database is to support conservation efforts by providing a robust, high-quality database that can grow with future expeditions. This includes:
 
 -   **Facilitating Research**: By providing comprehensive and standardized data, the database supports a wide range of scientific research on marine ecosystems.
 -   **Enhancing Conservation Efforts**: Detailed and accurate data helps conservationists develop effective strategies to protect marine environments.
@@ -51,9 +50,12 @@ The primary objective of the Pristine Seas Database is to support conservation e
 
 # Database Structure
 
-The database is organized into datasets for each scientific method, starting with the fish surveys dataset. Additionally, reference tables such as the `expeditions` table are maintained separately to provide consistent and reusable information across different datasets. Here’s an overview of the main components:
+The database is organized into modular datasets for each scientific method, alongside a set of high-level reference datasets that provide shared information across methods. The primary reference datasets include: `expedition`, `sites`, and `taxa_info`.
 
-## [Expeditions Table](https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1spristine-seas!2sexpeditions!3sexpeditions)
+
+
+
+## [Expeditions Table](https://console.cloud.google.com/bigquery?ws=!1m4!1m3!3m2!1spristine-seas!2sAll_expeditions)
 
 **Purpose**: To capture metadata about each scientific expedition, including details such as the country of the expedition, partner organizations, the ship used, and the expedition leader.
 
@@ -143,7 +145,7 @@ expeditions_schema <- list(
 
 # Create the fish metadata table
 bq_table_create(
-  bq_table(project_id, "expeditions", "expeditions"),
+  bq_table(project_id, "All_expeditions", "expeditions"),
   fields = expeditions_schema
 )
 ```
@@ -151,7 +153,7 @@ bq_table_create(
 ```{r upload_exp_data, message = F, warning = F, echo = F}
 # Load data from the CSV file
 expeditions_data <- read_csv(file.path(ps_science_path,
-                             "data management/expeditions.csv"))
+                             "methods-and-SOP/data-management/expeditions.csv"))
 
 
 expeditions_data <- expeditions_data |> 
