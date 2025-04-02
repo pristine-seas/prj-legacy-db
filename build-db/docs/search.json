@@ -150,11 +150,11 @@
     ]
   },
   {
-    "objectID": "03_fish_dataset.html#dataset-structure",
-    "href": "03_fish_dataset.html#dataset-structure",
+    "objectID": "03_fish_dataset.html#structure",
+    "href": "03_fish_dataset.html#structure",
     "title": "4  Fish Dataset",
-    "section": "Dataset Structure",
-    "text": "Dataset Structure\nEach fish record is linked to its corresponding site and station using ps_site_id and ps_station_id. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.\n\nSite — Location and environmental metadata (uvs_sites)\nStation — One fish survey at a site and depth (fish.stations)\nObservation — Fish records per transect (fish.observations)\nSummary — Aggregated biomass and community metrics (fish.biomass_by_taxa)",
+    "section": "Structure",
+    "text": "Structure\nEach fish record is linked to its corresponding site and station using ps_site_id and ps_station_id. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.\n\nSite — Location and environmental metadata (uvs_sites)\nStation — One fish survey at a site and depth (fish.stations)\nObservation — Fish records per transect (fish.observations)\nSummary — Aggregated biomass and community metrics (fish.biomass_by_taxa)",
     "crumbs": [
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
     ]
@@ -205,16 +205,6 @@
     "title": "4  Fish Dataset",
     "section": "Data Access",
     "text": "Data Access\n\nHow to join with uvs_sites, species_lists, and other tables\nTips for filtering by region, depth, or family\nFolded code examples (e.g., summarize richness or biomass)",
-    "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
-    ]
-  },
-  {
-    "objectID": "03_fish_dataset.html#structure",
-    "href": "03_fish_dataset.html#structure",
-    "title": "4  Fish Dataset",
-    "section": "Structure",
-    "text": "Structure\nEach fish record is linked to its corresponding site and station using ps_site_id and ps_station_id. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.\n\nSite — Location and environmental metadata (uvs_sites)\nStation — One fish survey at a site and depth (fish.stations)\nObservation — Fish records per transect (fish.observations)\nSummary — Aggregated biomass and community metrics (fish.biomass_by_taxa)",
     "crumbs": [
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>Fish Dataset</span>"
     ]
