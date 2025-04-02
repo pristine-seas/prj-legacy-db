@@ -69,7 +69,7 @@ core_site_schema <- tibble::tibble(
   Method = "Core",
   Field = core_site_fields,
   Type = c("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "DATE", "TIME", "FLOAT", "FLOAT", "STRING", "STRING"),
-  Required = TRUE,
+  Required = c(rep(TRUE, 11), FALSE),
   Description = c("Unique expedition identifier in the format `ISO3_YYYY` (e.g., `PNG_2024`).",
                   "Cruise leg or operational phase (e.g., Leg 1, Caribbean vs. Pacific)",
                   "Type of survey conducted. Allowed values: `uvs`, `sbruvs`, `pbruvs`, `sub`, `rov`, `dscm`, `bird`, `ysi`, 'edna'",

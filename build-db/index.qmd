@@ -42,6 +42,7 @@ Each dataset is documented in its own chapter.
 
 The following schematic shows how data are organized within the BigQuery project:
 
+```text
 pristine-seas
 ├── expeditions
 │   └── metadata
@@ -67,10 +68,14 @@ pristine-seas
 │   ├── stations
 │   ├── samples
 │   └── MARKER_sequences_by_taxa_by_station
+├── ...
+├── ...
+├── ...
 ├── species_lists
 ├── lookup
 │   ├── contributors
 │   └── vocabularies
+```
 
 ## Data Model
 

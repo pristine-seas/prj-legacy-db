@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-03-31">
+<meta name="dcterms.date" content="2025-04-02">
 
 <title>Pristine Seas Science Database</title>
 <style>
@@ -4679,6 +4679,12 @@ vertical-align: -.125em;
  <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Sites</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_fish_dataset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Fish Dataset</span></span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -4722,7 +4728,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 31, 2025</p>
+      <p class="date">April 2, 2025</p>
     </div>
   </div>
   
@@ -4763,7 +4769,38 @@ vertical-align: -.125em;
 <section id="directory-structure" class="level3">
 <h3 class="anchored" data-anchor-id="directory-structure">Directory Structure</h3>
 <p>The following schematic shows how data are organized within the BigQuery project:</p>
-<p>pristine-seas ├── expeditions │ └── metadata ├── sites │ ├── uvs_sites │ ├── pbruvs_sites │ ├── sbruvs_sites │ ├── sub_sites │ ├── rov_sites │ ├── dscm_sites │ ├── edna_sites │ ├── bird_sites │ └── ysi_sites ├── fish │ ├── stations │ ├── observations │ └── biomass_by_taxa ├── lpi │ ├── stations │ ├── counts │ └── cover_by_taxa ├── edna │ ├── stations │ ├── samples │ └── MARKER_sequences_by_taxa_by_station ├── species_lists ├── lookup │ ├── contributors │ └── vocabularies</p>
+<pre class="text"><code>pristine-seas
+├── expeditions
+│   └── metadata
+├── sites
+│   ├── uvs_sites
+│   ├── pbruvs_sites
+│   ├── sbruvs_sites
+│   ├── sub_sites
+│   ├── rov_sites
+│   ├── dscm_sites
+│   ├── edna_sites
+│   ├── bird_sites
+│   └── ysi_sites
+├── fish
+│   ├── stations
+│   ├── observations
+│   └── biomass_by_taxa
+├── lpi
+│   ├── stations
+│   ├── counts
+│   └── cover_by_taxa
+├── edna
+│   ├── stations
+│   ├── samples
+│   └── MARKER_sequences_by_taxa_by_station
+├── ...
+├── ...
+├── ...
+├── species_lists
+├── lookup
+│   ├── contributors
+│   └── vocabularies</code></pre>
 </section>
 </section>
 <section id="data-model" class="level2">
