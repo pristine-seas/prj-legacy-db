@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-04-10">
+<meta name="dcterms.date" content="2025-04-09">
 
-<title>Pristine Seas Science Database</title>
+<title>Pristine Seas Science Database - 5&nbsp; Fish</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -1589,7 +1589,7 @@ function fuseSearch(query, fuse, fuseOptions) {
 }
 </script>
 <meta name="quarto:offset" content="./">
-<link href="./01_expeditions.html" rel="next">
+<link href="./03_taxa_uvs_fish.html" rel="prev">
 <script>const sectionChanged = new CustomEvent("quarto-sectionChanged", {
   detail: {},
   bubbles: true,
@@ -4630,7 +4630,7 @@ vertical-align: -.125em;
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Overview</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./04_fish_dataset.html">Datasets</a></li><li class="breadcrumb-item"><a href="./04_fish_dataset.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fish</span></a></li></ol></nav>
         <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -4663,7 +4663,7 @@ vertical-align: -.125em;
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Overview</span></span></a>
   </div>
 </li>
@@ -4707,7 +4707,7 @@ vertical-align: -.125em;
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./04_fish_dataset.html" class="sidebar-item-text sidebar-link">
+  <a href="./04_fish_dataset.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fish</span></span></a>
   </div>
 </li>
@@ -4723,29 +4723,22 @@ vertical-align: -.125em;
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#structure" id="toc-structure" class="nav-link" data-scroll-target="#structure">Structure</a>
-  <ul>
-  <li><a href="#core-datasets" id="toc-core-datasets" class="nav-link" data-scroll-target="#core-datasets">Core Datasets</a></li>
-  <li><a href="#directory-structure" id="toc-directory-structure" class="nav-link" data-scroll-target="#directory-structure">Directory Structure</a></li>
-  </ul></li>
-  <li><a href="#data-model" id="toc-data-model" class="nav-link" data-scroll-target="#data-model">Data Model</a></li>
-  <li><a href="#reference-tables" id="toc-reference-tables" class="nav-link" data-scroll-target="#reference-tables">Reference Tables</a></li>
-  <li><a href="#naming-conventions" id="toc-naming-conventions" class="nav-link" data-scroll-target="#naming-conventions">Naming conventions</a>
-  <ul>
-  <li><a href="#style-guide" id="toc-style-guide" class="nav-link" data-scroll-target="#style-guide">Style Guide</a></li>
-  </ul></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#structure" id="toc-structure" class="nav-link" data-scroll-target="#structure">Structure</a></li>
+  <li><a href="#table-fish.stations" id="toc-table-fish.stations" class="nav-link" data-scroll-target="#table-fish.stations">Table: <code>fish.stations</code></a></li>
+  <li><a href="#table-fish.observations" id="toc-table-fish.observations" class="nav-link" data-scroll-target="#table-fish.observations">Table: <code>fish.observations</code></a></li>
+  <li><a href="#table-biomass_by_taxa" id="toc-table-biomass_by_taxa" class="nav-link" data-scroll-target="#table-biomass_by_taxa">Table: <code>biomass_by_taxa</code></a></li>
+  <li><a href="#qaqc-procedures" id="toc-qaqc-procedures" class="nav-link" data-scroll-target="#qaqc-procedures">QA/QC Procedures</a></li>
   <li><a href="#data-access" id="toc-data-access" class="nav-link" data-scroll-target="#data-access">Data Access</a></li>
-  <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation">Documentation</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./04_fish_dataset.html">Datasets</a></li><li class="breadcrumb-item"><a href="./04_fish_dataset.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fish</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Pristine Seas Science Database</h1>
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fish</span></h1>
 </div>
 
 
@@ -4756,7 +4749,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 10, 2025</p>
+      <p class="date">April 9, 2025</p>
     </div>
   </div>
   
@@ -4768,192 +4761,1644 @@ vertical-align: -.125em;
 </header>
 
 
-<section id="introduction" class="level2">
-<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>The <strong>Pristine Seas Science Database</strong> is a comprehensive scientific repository designed to store and manage data collected from a global series of scientific expeditions aimed at studying and conserving marine ecosystems. This database facilitates the exploration, analysis, and sharing of data across multiple years, locations, and scientific methods. The ultimate goal is to support conservation efforts by providing robust, high-quality data to researchers, conservationists, and policymakers.</p>
-<p>The primary objectives of the Pristine Seas Database are to:</p>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>The <code>fish</code> dataset contains visual survey data and associated metadata for reef-associated fish communities recorded during Pristine Seas expeditions. These data support ecological assessments of biomass, species richness, and community structure across sites, regions, and management zones.</p>
+<p>All observations were collected using standardized SCUBA-based belt transects, following protocols for underwater visual surveys (UVS). At each station, trained observers recorded species identity, estimated total length, and abundance for all fishes encountered (see Methods for details).</p>
+<p>The dataset follows the Pristine Seas data model: <strong>Site → Station → Observation → Summary</strong>, and is organized into the following related tables:</p>
 <ul>
-<li><strong>Facilitate research</strong>: By providing comprehensive and standardized data, the database supports a wide range of scientific research on marine ecosystems.</li>
-<li><strong>Enhance conservation efforts</strong>: Detailed and accurate data help conservationists develop effective strategies to protect marine environments.</li>
-<li><strong>Promote collaboration</strong>: The database enables collaboration between researchers, conservationists, and policymakers by providing a shared repository of valuable data.</li>
-<li><strong>Ensure scalability</strong>: Designed to be modular and scalable, the database can easily incorporate new data from future expeditions without major restructuring.</li>
+<li><code>fish.stations</code> — One row per fish survey at a unique depth stratum per site. Includes diver, depth, number of transects, and effort metadata.</li>
+<li><code>fish.observations</code> — One row per taxon observed at a station, including size, count, and calculated biomass.</li>
+<li><code>fish.biomass_by_taxa</code> — A derived table with biomass estimates and ecological classifications (e.g., trophic group) aggregated by taxon and station.</li>
 </ul>
 </section>
 <section id="structure" class="level2">
 <h2 class="anchored" data-anchor-id="structure">Structure</h2>
-<p>The Pristine Seas Database is hosted in <strong>Google BigQuery</strong> under the project name <code>pristine-seas</code>. It is organized into multiple <strong>modular datasets</strong> based on data type and research method. This structure supports scalability and flexibility, allowing new data to be integrated without major restructuring.</p>
-<section id="core-datasets" class="level3">
-<h3 class="anchored" data-anchor-id="core-datasets">Core Datasets</h3>
-<p>The main components of the database include:</p>
+<p>Each fish record is linked to its corresponding site and station using <code>ps_site_id</code> and <code>ps_station_id</code>. This modular structure supports fine-scale ecological analysis and integration with other UVS methods such as benthic surveys and eDNA.</p>
 <ul>
-<li><strong><code>expeditions</code></strong> – Metadata about each expedition, including country, dates, team leads, partners, and logistics.</li>
-<li><strong><code>sites</code></strong> – Spatial and temporal metadata for each sampling location. Each method has its own site table.</li>
-<li><strong>Method datasets</strong> – Structured by method (e.g., <code>fish</code>, <code>lpi</code>, <code>sub</code>, <code>edna</code>, <code>birds</code>). Each contains raw observations, station metadata, and summary tables.</li>
-<li><strong><code>taxonomy</code></strong> – Reference lists of taxa by method and region.</li>
-<li><strong><code>lookup</code></strong> – Tables for controlled vocabularies, contributor names, and other reference information.</li>
+<li><strong>Site</strong> — Location and environmental metadata (<code>uvs_sites</code>)</li>
+<li><strong>Station</strong> — One fish survey at a site and depth (<code>fish.stations</code>)</li>
+<li><strong>Observation</strong> — Fish records per transect (<code>fish.observations</code>)</li>
+<li><strong>Summary</strong> — Aggregated biomass and community metrics (<code>fish.biomass_by_taxa</code>)</li>
 </ul>
-<p>Each dataset is documented in its own chapter.</p>
 </section>
-<section id="directory-structure" class="level3">
-<h3 class="anchored" data-anchor-id="directory-structure">Directory Structure</h3>
-<p>The following schematic shows how data are organized within the BigQuery project:</p>
-<pre class="text"><code>pristine-seas
-├── expeditions
-│   └── metadata
-├── sites
-│   ├── uvs_sites
-│   ├── pbruvs_sites
-│   ├── sbruvs_sites
-│   ├── sub_sites
-│   ├── rov_sites
-│   ├── dscm_sites
-│   ├── edna_sites
-│   ├── bird_sites
-│   └── ysi_sites
-├── fish
-│   ├── stations
-│   ├── observations
-│   └── biomass_by_taxa
-├── lpi
-│   ├── stations
-│   ├── counts
-│   └── cover_by_taxa
-├── edna
-│   ├── stations
-│   ├── samples
-│   └── MARKER_sequences_by_taxa_by_station
-├── ...
-├── ...
-├── ...
-├── species_lists
-├── lookup
-│   ├── contributors
-│   └── vocabularies</code></pre>
-</section>
-</section>
-<section id="data-model" class="level2">
-<h2 class="anchored" data-anchor-id="data-model">Data Model</h2>
-<p>Most method datasets in the database follow a standardized four-tier structure:</p>
+<section id="table-fish.stations" class="level2">
+<h2 class="anchored" data-anchor-id="table-fish.stations">Table: <code>fish.stations</code></h2>
+<p>This table contains one row per SCUBA-based fish survey conducted at a unique depth stratum within a site. Each row includes dive metadata, survey effort (e.g., number of transects, area surveyed), and optional ecological summaries such as species richness, abundance, and biomass (<a href="#tbl-fish-stations-schema" class="quarto-xref">Table&nbsp;<span>5.1</span></a>).</p>
+<p>This table contains one row per SCUBA-based fish survey conducted at a unique depth stratum within a site. Each row includes dive metadata, survey effort (e.g., number of transects, area surveyed), and optional ecological summaries such as species richness, abundance, and biomass.</p>
+<p>Stations are linked to the <code>uvs_sites</code> table via <code>ps_site_id</code>. The <code>ps_station_id</code> is constructed by appending the rounded depth (in meters) to the <code>ps_site_id</code>, followed by <code>"m"</code>.</p>
+<p><strong>Example:</strong></p>
 <ul>
-<li><p><strong>Sites</strong>: Represent the <em>where, when, and who</em> of a sampling event. Each method has its own <code>sites</code> table that captures location, date, and team metadata, along with method-specific fields (e.g., habitat type, sub dive details).</p></li>
-<li><p><strong>Stations</strong>: Represent the core sampling unit within a site. A site may have one or more stations depending on the method. For example:</p>
-<ul>
-<li>Underwater visual surveys: different depth strata × method (e.g., LPI, BLT)</li>
-<li>Submersible dives: horizontal transects at different depths.</li>
-<li>Pelagic BRUVS: each camera rig in a five-rig set.</li>
-</ul></li>
-<li><p><strong>Observations</strong>: Contain QA/QC’d and minimally processed data recorded at each station — for example, fish counts by species or LPI substrate counts.</p></li>
-<li><p><strong>Summaries</strong>: Include cleaned, aggregated, or derived data products often used in analysis or visualization. Examples include: <code>biomass_by_taxa</code> (fish), <code>cover_by_taxa</code> (LPI), or <code>sequences_by_taxa</code> (eDNA)</p></li>
-</ul>
-<p>This four-tier structure helps organize data from field collection to final analysis in a way that is modular, scalable, and aligned with FAIR data principles.</p>
-</section>
-<section id="reference-tables" class="level2">
-<h2 class="anchored" data-anchor-id="reference-tables">Reference Tables</h2>
-<p>In addition to raw and summary data, the Pristine Seas Database includes (or will include) a set of shared reference tables to support data standardization and integration across methods.</p>
-<ul>
-<li><p><strong>Taxonomy dataset</strong> (planned): A centralized reference for taxonomic names across all methods. This dataset will include:</p>
-<ul>
-<li>A master species list with scientific and common names</li>
-<li>Valid names and synonyms (to support QA/QC and merging)</li>
-<li>Cross-links to marker gene names (for eDNA)</li>
-<li>Higher-level taxonomy (family, order, class, etc.)</li>
-</ul>
-<p>This taxonomy reference will support harmonized analyses across methods and simplify joins between observation and species-level tables.</p></li>
-<li><p><strong>Contributors table</strong> (planned): A lookup table for team members, observers, and leads involved in each expedition. This will support standardized contributor names and roles across datasets.</p></li>
-<li><p><strong>Controlled vocabularies</strong> (planned): A lookup table for categorical fields used across site and station tables, including:</p>
-<ul>
-<li>Habitat types (e.g., fore reef, patch reef)</li>
-<li>Exposure categories (e.g., windward, leeward)</li>
-<li>Dive types, bottom types, and other method-specific classifications</li>
-</ul></li>
-</ul>
-<p>These reference tables will live in a dedicated lookup or taxonomy dataset and be maintained as the database evolves.</p>
-</section>
-<section id="naming-conventions" class="level2">
-<h2 class="anchored" data-anchor-id="naming-conventions">Naming conventions</h2>
-<p>The Pristine Seas Database uses standardized naming conventions to ensure clarity, consistency, and traceability across expeditions, methods, and sampling units.</p>
-<ul>
-<li><p><strong>Expedition ID (<code>exp_id</code>)</strong><br>
-Format: <code>ISO3CODE_year</code><br>
-Examples:</p>
-<ul>
-<li><code>COL_2024</code> – Colombia 2024<br>
+<li><code>ps_site_id</code>: <em>CHL_2024_uvs_001</em><br>
 </li>
-<li><code>FJI_2025</code> – Fiji 2025</li>
-</ul></li>
-<li><p><strong>Site ID (<code>ps_site_id</code>)</strong><br>
-Format: <code>exp_id_method_###</code><br>
-This uniquely identifies each sampling site within a given expedition and method.<br>
-Examples:</p>
-<ul>
-<li><code>COL_2024_uvs_001</code> – First underwater visual survey site in Colombia 2024<br>
+<li><code>depth_m</code>: <em>18.2</em><br>
 </li>
-<li><code>FJI_2025_sbruvs_004</code> – Fourth seabed BRUVs site in Fiji 2025</li>
-</ul></li>
-<li><p><strong>Station ID (<code>ps_station_id</code>)</strong><br>
-Each station is a sampling unit within a site. The format varies slightly by method:</p>
-<ul>
-<li><p><strong>Underwater visual surveys (UVS)</strong><br>
-Format: <code>ps_site_id_depthm</code><br>
-Example: <code>COL_2024_uvs_001_10m</code><br>
-Stations at the same site and depth may be used for multiple methods (e.g., fish, LPI, BLT). The specific method is recorded in a separate <code>method</code> column.</p></li>
-<li><p><strong>Pelagic BRUVs</strong><br>
-Format: <code>ps_site_id_rig</code><br>
-Example: <code>CHL_2024_pbruvs_002_r101</code> – Rig 101 at site 002</p></li>
-<li><p><strong>Submersible transects</strong><br>
-Format: <code>ps_site_id_transectdepth</code><br>
-Example: <code>FJI_2025_sub_001_250m</code> – 250 m transect during sub dive 001</p></li>
-<li><p><strong>Sub-collected eDNA samples</strong><br>
-Format: <code>exp_id_sedna_site_depthm_r#</code><br>
-Example: <code>FJI_2025_sedna_001_300m_r1</code> – First replicate at 300 m from submersible site 001</p></li>
-</ul></li>
+<li><code>ps_station_id</code>: <em>CHL_2024_uvs_001_18m</em></li>
 </ul>
-<p>Station-level tables include a separate method column to differentiate data types collected at the same station.</p>
-<section id="style-guide" class="level3">
-<h3 class="anchored" data-anchor-id="style-guide">Style Guide</h3>
-<p>To ensure consistency and clarity across all tables and code, the Pristine Seas Database follows these style conventions:</p>
+<p>This station ID format is consistent across all underwater visual survey (UVS) methods in the Pristine Seas database, including fish, benthic cover, and eDNA surveys.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Standard depth strata for UVS methods">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Standard depth strata for UVS methods
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <ul>
-<li>All field and table names use <code>snake_case</code></li>
-<li>No spaces are used in field or file names</li>
-<li>All names are lowercase unless scientific convention requires capitalization.</li>
-<li>Field names are descriptive but concise, using underscores to separate words</li>
+<li><strong>Super shallow</strong>: ≤ 5 m<br>
+</li>
+<li><strong>Shallow</strong>: 5–15 m<br>
+</li>
+<li><strong>Deep</strong>: &gt; 15 m</li>
 </ul>
-<p>These conventions support readability and compatibility across SQL, R, and other tools.</p>
+</div>
+</div>
+<div class="cell">
+<div id="tbl-fish-stations-schema" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fish-stations-schema-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.1: <code>fish.stations</code> Table Schema
+</figcaption>
+<div aria-describedby="tbl-fish-stations-schema-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div id="yytswvmvve" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#yytswvmvve table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#yytswvmvve thead, #yytswvmvve tbody, #yytswvmvve tfoot, #yytswvmvve tr, #yytswvmvve td, #yytswvmvve th {
+border-style: none;
+}
+#yytswvmvve p {
+margin: 0;
+padding: 0;
+}
+#yytswvmvve .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 13px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #000000;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#yytswvmvve .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#yytswvmvve .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#yytswvmvve .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#yytswvmvve .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#yytswvmvve .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#yytswvmvve .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#yytswvmvve .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: bold;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#yytswvmvve .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: bold;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#yytswvmvve .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#yytswvmvve .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#yytswvmvve .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#yytswvmvve .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#yytswvmvve .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#yytswvmvve .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#yytswvmvve .gt_from_md > :first-child {
+margin-top: 0;
+}
+#yytswvmvve .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#yytswvmvve .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#yytswvmvve .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yytswvmvve .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#yytswvmvve .gt_row_group_first td {
+border-top-width: 2px;
+}
+#yytswvmvve .gt_row_group_first th {
+border-top-width: 2px;
+}
+#yytswvmvve .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yytswvmvve .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#yytswvmvve .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#yytswvmvve .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#yytswvmvve .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yytswvmvve .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#yytswvmvve .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#yytswvmvve .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#yytswvmvve .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#yytswvmvve .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#yytswvmvve .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yytswvmvve .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#yytswvmvve .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yytswvmvve .gt_left {
+text-align: left;
+}
+#yytswvmvve .gt_center {
+text-align: center;
+}
+#yytswvmvve .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#yytswvmvve .gt_font_normal {
+font-weight: normal;
+}
+#yytswvmvve .gt_font_bold {
+font-weight: bold;
+}
+#yytswvmvve .gt_font_italic {
+font-style: italic;
+}
+#yytswvmvve .gt_super {
+font-size: 65%;
+}
+#yytswvmvve .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#yytswvmvve .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#yytswvmvve .gt_indent_1 {
+text-indent: 5px;
+}
+#yytswvmvve .gt_indent_2 {
+text-indent: 10px;
+}
+#yytswvmvve .gt_indent_3 {
+text-indent: 15px;
+}
+#yytswvmvve .gt_indent_4 {
+text-indent: 20px;
+}
+#yytswvmvve .gt_indent_5 {
+text-indent: 25px;
+}
+</style>
+
+<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_col_headings">
+<th id="Field" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Field</th>
+<th id="Type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Type</th>
+<th id="Required" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col">Required</th>
+<th id="Description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Description</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">exp_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Expedition ID (e.g., CHL_2024)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">ps_site_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Pristine Seas site ID shared by fish, benthic, and eDNA surveys</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">method</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Method name; always 'fish' for this table</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">ps_station_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Unique station ID (e.g., CHL_2024_uvs_001_18m)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">diver</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Initials or name of the primary diver</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">depth_m</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Depth of the station in meters</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">depth_strata</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Depth stratum: super shallow (≤5 m), shallow (5–15 m), or deep (&gt;15 m)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">n_transects</td>
+<td class="gt_row gt_left" headers="Type">INTEGER</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Number of transects surveyed at the station</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">area_m2</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Total area surveyed (in m²)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">date</td>
+<td class="gt_row gt_left" headers="Type">DATE</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Date of the fish survey</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">time</td>
+<td class="gt_row gt_left" headers="Type">TIME</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Start time of the survey (local time)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">location</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Name of the broader sampling area (e.g., reef or island)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">sublocation</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Finer-scale site name within the location</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">habitat</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Habitat type: fore reef, back reef, etc.</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">exposure</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Exposure classification: windward, leeward, or lagoon</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">notes</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Optional comments or observations</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">n_species</td>
+<td class="gt_row gt_left" headers="Type">INTEGER</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Number of species observed (optional summary)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">abundance</td>
+<td class="gt_row gt_left" headers="Type">INTEGER</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Estimated fish abundance (individuals per m², optional summary)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">biomass</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Estimated total fish biomass (g/m², optional summary)</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
 </section>
+<section id="table-fish.observations" class="level2">
+<h2 class="anchored" data-anchor-id="table-fish.observations">Table: <code>fish.observations</code></h2>
+<p>This table contains one row per fish observation recorded on a single transect. Observations are organized by species, size, and count, and represent raw field data collected by trained divers using SCUBA-based underwater visual surveys (UVS). Each record includes the station and transect ID, species identity (<code>taxon_id</code>), estimated total length (<code>length_cm</code>), number of individuals observed (<code>count</code>), and standardized metrics for density and biomass (<a href="#tbl-fish-obs-schema" class="quarto-xref">Table&nbsp;<span>5.2</span></a>).</p>
+<p>Each observation is linked to its corresponding station via <code>ps_station_id</code>, and to species-level metadata via <code>taxon_id</code>. All records from the same transect (A–C) within a station share the same <code>ps_station_id</code> and <code>transect</code> label.</p>
+<p>The fields <code>abundance</code> and <code>biomass</code> are calculated post hoc using size-specific transect areas and taxon-specific length–weight parameters from the species reference table.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Transect dimensions based on fish size">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Transect dimensions based on fish size
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Fish <strong>≥ 20 cm</strong> are counted on the outward swim within a 25 m × 4 m belt (100 m²)<br>
+</li>
+<li>Fish <strong>&lt; 20 cm</strong> are counted on the return swim within a 25 m × 2 m belt (50 m²) <em>Note: In rare cases where transects deviate from the standard 25 m length, actual length should be recorded and used for calculating abundance and biomass.</em></li>
+</ul>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>⚠️ Each row represents a unique <strong>species–size–transect</strong> combination. Multiple size classes of the same species within a transect are recorded as separate rows.</p>
+</blockquote>
+<div class="cell">
+<div id="tbl-fish-obs-schema" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fish-obs-schema-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.2: <code>fish.observations</code> Table Schema
+</figcaption>
+<div aria-describedby="tbl-fish-obs-schema-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div id="oileklbozx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#oileklbozx table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#oileklbozx thead, #oileklbozx tbody, #oileklbozx tfoot, #oileklbozx tr, #oileklbozx td, #oileklbozx th {
+border-style: none;
+}
+#oileklbozx p {
+margin: 0;
+padding: 0;
+}
+#oileklbozx .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 13px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #000000;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#oileklbozx .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#oileklbozx .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#oileklbozx .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#oileklbozx .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#oileklbozx .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#oileklbozx .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#oileklbozx .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: bold;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#oileklbozx .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: bold;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#oileklbozx .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#oileklbozx .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#oileklbozx .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#oileklbozx .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#oileklbozx .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#oileklbozx .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#oileklbozx .gt_from_md > :first-child {
+margin-top: 0;
+}
+#oileklbozx .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#oileklbozx .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#oileklbozx .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#oileklbozx .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#oileklbozx .gt_row_group_first td {
+border-top-width: 2px;
+}
+#oileklbozx .gt_row_group_first th {
+border-top-width: 2px;
+}
+#oileklbozx .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#oileklbozx .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#oileklbozx .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#oileklbozx .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#oileklbozx .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#oileklbozx .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#oileklbozx .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#oileklbozx .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#oileklbozx .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#oileklbozx .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#oileklbozx .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#oileklbozx .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#oileklbozx .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#oileklbozx .gt_left {
+text-align: left;
+}
+#oileklbozx .gt_center {
+text-align: center;
+}
+#oileklbozx .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#oileklbozx .gt_font_normal {
+font-weight: normal;
+}
+#oileklbozx .gt_font_bold {
+font-weight: bold;
+}
+#oileklbozx .gt_font_italic {
+font-style: italic;
+}
+#oileklbozx .gt_super {
+font-size: 65%;
+}
+#oileklbozx .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#oileklbozx .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#oileklbozx .gt_indent_1 {
+text-indent: 5px;
+}
+#oileklbozx .gt_indent_2 {
+text-indent: 10px;
+}
+#oileklbozx .gt_indent_3 {
+text-indent: 15px;
+}
+#oileklbozx .gt_indent_4 {
+text-indent: 20px;
+}
+#oileklbozx .gt_indent_5 {
+text-indent: 25px;
+}
+</style>
+
+<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_col_headings">
+<th id="Field" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Field</th>
+<th id="Type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Type</th>
+<th id="Required" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col">Required</th>
+<th id="Description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Description</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">obs_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Unique identifier for each observation (e.g., CHL_2024_uvs_001_18m_A_0001)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">ps_station_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Unique ID of the station where the transect was conducted</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">transect</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Transect label within the station (e.g., A, B, C)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">diver</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Initials or name of the diver who recorded the observation</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">taxon_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Unique identifier for the observed taxon (linked to species list)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">scientific_name</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Scientific name of the observed species</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">length_cm</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Estimated total length (cm) of the individual or midpoint of size class</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">count</td>
+<td class="gt_row gt_left" headers="Type">INTEGER</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Number of individuals observed at this length</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">abundance</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Estimated fish abundance (individuals per m²), standardized to transect area</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">biomass</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Estimated fish biomass (g/m²), standardized to transect area</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">notes</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Optional comments, behavioral notes, or uncertainty flags</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="table-biomass_by_taxa" class="level2">
+<h2 class="anchored" data-anchor-id="table-biomass_by_taxa">Table: <code>biomass_by_taxa</code></h2>
+<p>This table contains summarized fish biomass and abundance data by taxon and station, derived from raw observations. Each row represents the total estimated biomass (in grams per m²) and abundance (individuals per m²) for a given species or taxon recorded at a station.</p>
+<p>Taxonomic and ecological fields (e.g., family, trophic group, functional group) are joined from the species reference list to support aggregation and visualization. This is the primary analysis-ready table for generating figures, summaries, and community structure plots.</p>
+<blockquote class="blockquote">
+<p>⚠️ All biomass and abundance values are standardized to the appropriate transect area based on fish size, following UVS survey protocols.</p>
+</blockquote>
+<div class="cell">
+<div id="tbl-fish-biomass-schema" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fish-biomass-schema-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.3: <code>fish.biomass_by_taxa</code> Table Schema
+</figcaption>
+<div aria-describedby="tbl-fish-biomass-schema-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div id="yusurnzjbs" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#yusurnzjbs table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#yusurnzjbs thead, #yusurnzjbs tbody, #yusurnzjbs tfoot, #yusurnzjbs tr, #yusurnzjbs td, #yusurnzjbs th {
+border-style: none;
+}
+#yusurnzjbs p {
+margin: 0;
+padding: 0;
+}
+#yusurnzjbs .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 13px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #000000;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#yusurnzjbs .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#yusurnzjbs .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#yusurnzjbs .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#yusurnzjbs .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#yusurnzjbs .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#yusurnzjbs .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#yusurnzjbs .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: bold;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#yusurnzjbs .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: bold;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#yusurnzjbs .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#yusurnzjbs .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#yusurnzjbs .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#yusurnzjbs .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#yusurnzjbs .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#yusurnzjbs .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#yusurnzjbs .gt_from_md > :first-child {
+margin-top: 0;
+}
+#yusurnzjbs .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#yusurnzjbs .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#yusurnzjbs .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yusurnzjbs .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#yusurnzjbs .gt_row_group_first td {
+border-top-width: 2px;
+}
+#yusurnzjbs .gt_row_group_first th {
+border-top-width: 2px;
+}
+#yusurnzjbs .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yusurnzjbs .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#yusurnzjbs .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#yusurnzjbs .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#yusurnzjbs .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yusurnzjbs .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#yusurnzjbs .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#yusurnzjbs .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#yusurnzjbs .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#yusurnzjbs .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#yusurnzjbs .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yusurnzjbs .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#yusurnzjbs .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#yusurnzjbs .gt_left {
+text-align: left;
+}
+#yusurnzjbs .gt_center {
+text-align: center;
+}
+#yusurnzjbs .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#yusurnzjbs .gt_font_normal {
+font-weight: normal;
+}
+#yusurnzjbs .gt_font_bold {
+font-weight: bold;
+}
+#yusurnzjbs .gt_font_italic {
+font-style: italic;
+}
+#yusurnzjbs .gt_super {
+font-size: 65%;
+}
+#yusurnzjbs .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#yusurnzjbs .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#yusurnzjbs .gt_indent_1 {
+text-indent: 5px;
+}
+#yusurnzjbs .gt_indent_2 {
+text-indent: 10px;
+}
+#yusurnzjbs .gt_indent_3 {
+text-indent: 15px;
+}
+#yusurnzjbs .gt_indent_4 {
+text-indent: 20px;
+}
+#yusurnzjbs .gt_indent_5 {
+text-indent: 25px;
+}
+</style>
+
+<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_col_headings">
+<th id="Field" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Field</th>
+<th id="Type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Type</th>
+<th id="Required" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col">Required</th>
+<th id="Description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Description</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">ps_station_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Unique Pristine Seas station ID (e.g., CHL_2024_uvs_001_18m)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">exp_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Expedition ID associated with the station (e.g., CHL_2024)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">location</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Broader sampling area (e.g., reef or island)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">habitat</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Habitat type: fore reef, back reef, etc.</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">exposure</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Exposure classification: windward, leeward, or lagoon</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">depth_m</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Depth of the station in meters</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">depth_strata</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Depth stratum: super shallow, shallow, or deep</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">n_transects</td>
+<td class="gt_row gt_left" headers="Type">INTEGER</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Number of transects surveyed at the station</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">taxon_id</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Unique identifier for the observed taxon (linked to species list)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">scientific_name</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Scientific name of the taxon</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">family</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Taxonomic family (from species list)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">trophic_group</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Ecological trophic group (e.g., herbivore, piscivore)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">functional_group</td>
+<td class="gt_row gt_left" headers="Type">STRING</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Functional classification (e.g., browser, planktivore)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">abundance</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Estimated abundance (individuals per m²) of the taxon at the station</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Field">biomass</td>
+<td class="gt_row gt_left" headers="Type">FLOAT</td>
+<td class="gt_row gt_center" headers="Required">TRUE</td>
+<td class="gt_row gt_left" headers="Description">Estimated biomass (grams per m²) of the taxon at the station</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Field">n_obs</td>
+<td class="gt_row gt_left" headers="Type">INTEGER</td>
+<td class="gt_row gt_center" headers="Required">FALSE</td>
+<td class="gt_row gt_left" headers="Description">Number of observations (rows in `fish.observations`) contributing to this summary</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="qaqc-procedures" class="level2">
+<h2 class="anchored" data-anchor-id="qaqc-procedures">QA/QC Procedures</h2>
+<p>This section describes the quality assurance and quality control (QA/QC) steps applied to the fish observation data:</p>
+<ul>
+<li><strong>Species validation</strong>: All <code>taxon_id</code> values are validated against the curated species list. Unknown or ambiguous species IDs are flagged for manual review.</li>
+<li><strong>Length outlier detection</strong>: Observations with <code>length_cm</code> outside of species-specific max/min values are flagged for review. This ensures that measurements are biologically realistic.</li>
+<li><strong>Effort checks</strong>: Observation totals (<code>count</code>, <code>abundance</code>, <code>biomass</code>) are validated against the number of transects (<code>n_transects</code>) and expected effort per diver.</li>
+<li><strong>Range enforcement</strong>: Fields like <code>count</code>, <code>length_cm</code>, <code>abundance</code>, and <code>biomass</code> are required to be non-negative and checked for reasonable ranges.</li>
+<li><strong>Duplication check</strong>: Duplicate <code>obs_id</code> values and repeated species–length–transect combinations are flagged and removed.</li>
+<li><strong>Cross-table validation</strong>: Ensure that <code>ps_station_id</code> exists in <code>fish.stations</code> and matches the corresponding metadata (e.g., habitat, exposure).</li>
+<li><strong>Data completeness</strong>: Missing critical fields (e.g., <code>taxon_id</code>, <code>length_cm</code>) are flagged for review.</li>
+<li><strong>Data summary checks</strong>: Post-processing checks ensure derived metrics like <code>biomass</code> and <code>abundance</code> fall within ecologically plausible ranges. Any unexpected values are flagged for further review.</li>
+<li><strong>QA/QC flags</strong>: Each observation is tagged with a <code>qaqc_flag</code> to track its quality status: <code>Pass</code>, <code>Warning</code>, or <code>Fail</code>.</li>
+</ul>
 </section>
 <section id="data-access" class="level2">
 <h2 class="anchored" data-anchor-id="data-access">Data Access</h2>
-<p>The Pristine Seas Database is designed to support a range of users and workflows, including:</p>
 <ul>
-<li><strong>Internal team members</strong>, using R or SQL for data cleaning, analysis, and reporting</li>
-<li><strong>Collaborating scientists</strong>, accessing standardized data for research</li>
-<li><strong>Conservation partners and policymakers</strong>, exploring summary metrics and results</li>
+<li>How to join with <code>uvs_sites</code>, <code>species_lists</code>, and other tables</li>
+<li>Tips for filtering by region, depth, or family</li>
+<li>Folded code examples (e.g., summarize richness or biomass)</li>
 </ul>
-<p>All data are stored in <strong>Google BigQuery</strong> under the project <code>pristine-seas</code>. Users can explore data through:</p>
-<ul>
-<li>SQL queries in the BigQuery console or RStudio</li>
-<li>Pre-built Quarto documents and dashboards</li>
-<li>A companion R package (in development), which provides:
-<ul>
-<li>Functions to query and download data from BigQuery</li>
-<li>QA/QC tools for validating raw field data</li>
-<li>Helpers to join sites, stations, and observations</li>
-<li>Prebuilt templates for summaries and reports</li>
-</ul></li>
-</ul>
-<p>This package will streamline common workflows, standardize data handling, and support reproducible research across the team.</p>
-<p>Datasets are modular, well-documented, and analysis-ready, making it easy for users to work with both raw and summary data.</p>
-</section>
-<section id="documentation" class="level2">
-<h2 class="anchored" data-anchor-id="documentation">Documentation</h2>
-<p>Each dataset in the Pristine Seas Database is documented in a separate chapter of this Quarto notebook. These chapters include:</p>
-<ul>
-<li>Dataset purpose and structure</li>
-<li>Schema definitions and field descriptions</li>
-<li>Method-specific notes and SOPs</li>
-<li>Links to controlled vocabularies and reference tables</li>
-</ul>
-<p>This modular documentation ensures transparency, reproducibility, and ease of navigation.</p>
 
 
 </section>
@@ -5348,11 +6793,11 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
+      <a href="./03_taxa_uvs_fish.html" class="pagination-link  aria-label=" &lt;span="">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Fish</span></span>
+      </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./01_expeditions.html" class="pagination-link" aria-label="<span class='chapter-number'>2</span>&nbsp; <span class='chapter-title'>Expeditions</span>">
-        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Expeditions</span></span> <i class="bi bi-arrow-right-short"></i>
-      </a>
   </div>
 </nav>
 </div> <!-- /content -->

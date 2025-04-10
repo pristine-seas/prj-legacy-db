@@ -47,6 +47,7 @@ Site tables are not designed to store method-specific sampling events such as tr
 A **site** represents a unique point in **space and time** where one or more scientific survey methods were conducted. Each site is uniquely identified by a standardized `ps_site_id` and serves as the fundamental spatial-temporal unit across the Pristine Seas database.
 
 A **site** may contain one or more **stations**, each representing a specific sampling event. Stations may differ by:
+
   - **Method** (e.g., fish BLT vs. benthic LPI conducted at the same UVS site)
   - **Depth stratum** (e.g., submersible transects at different depths)
   - **Replicate** (e.g., multiple pelagic BRUVS rigs deployed at a single site)
@@ -57,31 +58,40 @@ This hierarchical structure allows for rich, scalable representation of spatiall
 
 All site tables in the database share a **core schema** that defines the essential spatial and temporal metadata for each sampling location (@tbl-core-site-schema). These fields represent the **what, where, when, and who** of data collection and are **required** across all site tables, regardless of method.
 
-This standardized structure enables consistent quality control, supports spatial and temporal analysis, and facilitates integration of data across methods, expeditions, and years.
-
 ```{r core_schema, eval = T, include = T}
 #| label: tbl-core-site-schema
 #| tbl-cap: "Core Site Schema"
 
-core_site_fields <- c("exp_id", "leg", "survey_type", "ps_site_id", "location", "sublocation", "date", "time", "lat", "lon", "team_lead", "notes")
+core_site_fields <- c("exp_id", "leg", "survey_type", "ps_site_id", 
+                      "region", "subregion", "locality",
+                      "date", "time", 
+                      "latitude", "longitude", 
+                      "lead", "notes")
 
 core_site_schema <- tibble::tibble(
   Method = "Core",
   Field = core_site_fields,
-  Type = c("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "DATE", "TIME", "FLOAT", "FLOAT", "STRING", "STRING"),
-  Required = c(rep(TRUE, 11), FALSE),
-  Description = c("Unique expedition identifier in the format `ISO3_YYYY` (e.g., `PNG_2024`).",
-                  "Cruise leg or operational phase (e.g., Leg 1, Caribbean vs. Pacific)",
-                  "Type of survey conducted. Allowed values: `uvs`, `sbruvs`, `pbruvs`, `sub`, `rov`, `dscm`, `bird`, `ysi`, 'edna'",
-                  "Unique Pristine Seas site ID in the format `ISO3_YYYY_survey_###` (e.g., `PNG_2024_uvs_001`).",
-                  "General area of the site (e.g., Gulf of Tribugá, Three Sister, Duff Islands)",
-                  "Finer-scale geographic area within the location, such as an island, atoll, bay (e.g., Ensendada de Utría, Bajo Nuevo)",
-                  "Sampling date in `YYYY-MM-DD` format.",
-                  "Local time of sampling (e.g., `14:30`). Format: 24-hour `HH:MM`",
-                  "Latitude in decimal degrees (e.g., `-0.7512`). Negative = south (WGS84)",
-                  "Longitude in decimal degrees (e.g., `-91.0812`). Negative = west (WGS84)",
-                  "Name of team lead or responsible field scientist",
-                  "Free-text notes describing the site"))
+  Type = c("STRING", "STRING", "STRING", "STRING", 
+           "STRING", "STRING", "STRING", 
+           "DATE", "TIME", 
+           "FLOAT", "FLOAT", 
+           "STRING", "STRING"),
+  Required = c(rep(TRUE, 12), FALSE),
+  Description = c(
+    "Unique expedition identifier in the format `ISO3_YYYY` (e.g., PNG_2024).",
+    "Cruise leg or operational phase (e.g., Leg 1, Pacific, North Coast).",
+    "Survey type. Allowed values: uvs, sbruvs, pbruvs, sub, rov, dscm, bird, ysi, edna.",
+    "Unique Pristine Seas site ID in the format `ISO3_YYYY_survey_###` (e.g., PNG_2024_uvs_001).",
+    "Broad region or administrative unit (e.g., Murat, Chocó, Tuamotu, Duff Islands).",
+    "Intermediate subregion such as an island, atoll, gulf, or reef complex (e.g., Mussau, Golfo de Tribugá).",
+    "Local named feature such as a community, bay, cove, reef, or village (e.g., Lolieng, Ensenada Utría).",
+    "Sampling date in `YYYY-MM-DD` format.",
+    "Local time of sampling (e.g., 14:30). Format: 24-hour `HH:MM`.",
+    "Latitude in decimal degrees (e.g., -0.7512). Negative = south (WGS84).",
+    "Longitude in decimal degrees (e.g., -91.0812). Negative = west (WGS84).",
+    "Name of the individual who led the fieldwork at this site.",
+    "Free-text notes describing the site or any irregularities.")
+)
 
 core_site_schema |>
   gt(groupname_col = "Method") |> 
@@ -94,6 +104,34 @@ core_site_schema |>
               heading.align = "center",
               column_labels.font.weight = "bold")
 ```
+
+#### Geographic Hierarchy
+
+Pristine Seas uses a standardized three-tier geographic hierarchy to describe the spatial context of each sampling site. These fields are used consistently across all methods and expeditions, enabling robust filtering, mapping, and spatial analysis.
+
+```{r geo_hirarchy, eval = T, include = T}
+#| label: tbl-geo-hierarchy
+#| tbl-cap: "Geographic Hierarchy Schema"
+
+
+tibble::tibble(
+  Field = c("`region`", "`subregion`", "`locality`"),
+  Description = c("A broad administrative, ecological, or biogeographic unit. Typically aligns with a province, marine ecoregion, or large island group (e.g., *Murat*, *Manus*, *Chocó*, *Temotu*).",
+                  "A mid-scale feature within the region. Often refers to a single island, atoll, gulf, reef complex, or archipelago (e.g., *Mussau*, *Bipi*, *Golfo de Tribugá*, *Nendo*).",
+                  "A specific place within the subregion — such as a bay, reef, village, point, or cove (e.g., *Lolieng*, *6 Islands Reef*, *Ensenada de Utría*, *Lata*).")) |>
+  gt() |>
+  cols_label(
+    Field = "Field",
+    Description = "Description") |>
+  tab_options(table.font.size = 13,
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold") 
+```
+
+This standardized structure enables consistent quality control, supports spatial and temporal analysis, and facilitates integration of data across methods, expeditions, and years.
 
 ## Method-Specific Tables
 
@@ -117,30 +155,29 @@ In addition to the core site fields, the `uvs_sites` table includes two key cont
     - **_seagrass_**: Shallow marine habitat dominated by seagrass beds.
     - **_rocky reef_**: Hard-bottom habitat composed primarily of rock.
     - **_other_**: Habitat that does not fit predefined categories.
-
+    
   - **`exposure`**: 
     - **_windward_**: Side of the island or reef facing prevailing winds and wave energy. Typically higher energy environments with more exposure to ocean swell.
     - **_leeward_**: Sheltered side, facing away from prevailing winds. Typically calmer, with reduced wave action.
     - **_lagoon_**: Located within a lagoon system, protected from direct oceanic exposure. Often shallow and calm, with restricted circulation.
     - **_other_**: Exposure type does not fit standard categories (e.g., enclosed bays).
  
-Additional fields include a `site_name` (often used for repeat surveys), the name of the local community (where relevant), protection status, and flags indicating which UVS sub-methods were conducted at each site (@tbl-uvs-site-schema).
+Additional fields include a `site_name` (often used for repeat surveys), protection status, and flags indicating which UVS sub-methods were conducted at each site (@tbl-uvs-site-schema).
 
 ```{r uvs_fields, eval = T, include = T}
 #| label: tbl-uvs-site-schema
 #| tbl-cap: "Additional fields to the core site fields in the `uvs_sites` table"
 
 uvs_site_fields <- tibble::tibble(Method = "uvs",
-                                  Field = c("site_name", "habitat", "exposure", "community", 
-                                            "protected",  "blt", "lpi", "ysi", "inverts", "recruits", "e_dna", "photomosaic"),
-                                  Type = c(rep("STRING", 4),
+                                  Field = c("site_name", "habitat", "exposure", 
+                                            "protected",  "blt", "lpi", "ysi", "inverts", "recruits", "edna", "photomosaic"),
+                                  Type = c(rep("STRING", 3),
                                            rep("BOOLEAN", 8)),
-                                  Required = c(FALSE, TRUE, TRUE, FALSE,
+                                  Required = c(FALSE, TRUE, TRUE,
                                                FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
                                   Description = c("Site name used in prior surveys or local knowledge (e.g., TNC_2000_001, Punta Esperanza)",
                                                   "Dominant habitat type. Allowed: *fore reef*, *back reef*, *fringing reef*, *patch reef*, *reef flat*, *lagoon patch reef*, *channel*, *seagrass*, *rocky reef*, *other*",
                                                   "Wind and wave exposure at the site. Allowed: *windward*, *leeward*, *lagoon*, *other*",
-                                                  "Nearest local community or population center to the site",
                                                   "Whether the site is within a marine protected area (MPA) or Tambu",
                                                   "Whether fish belt transects were done at this site",
                                                   "Whether benthic point intercept transects were done at this site",
@@ -263,8 +300,8 @@ sbruvs_site_fields <- tibble::tibble(Method = "sbruvs",
                                      Field = c("habitat", "exposure"),
                                      Type = c("STRING", "STRING"),
                                      Required = c(TRUE, TRUE),
-                                     Description = c("Simplified habitat classification at the site. Allowed values: *fore reef*, *back reef*, *fringing reef*, *patch reef*, *reef flat*, *channel*, *seagrass*, *rocky reef*, *bay*, *estuary*, *mangrove*, *sand flat*, *other*.",
-                                                     "Wind and wave exposure at the site. Allowed values: *windward*, *leeward*, *lagoon*, *other*."))
+                                     Description = c("Simplified habitat classification at the site. Allowed values: fore reef, back reef, fringing reef, patch reef, reef flat, channel, seagrass, rocky reef, bay, estuary, mangrove, sand flat, other.",
+                                                     "Wind and wave exposure at the site. Allowed values: windward, leeward, lagoon, other."))
 
 sbruvs_site_fields |>
   gt::gt(groupname_col = "Method") |> 
